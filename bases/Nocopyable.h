@@ -9,8 +9,8 @@ class Nocopy
         Nocopy& operator=(const Nocopy &v) = delete;
         Nocopy(const Nocopy &&v) = delete;
         Nocopy& operator=(const Nocopy &&v) = delete;
-    public:
-        Nocopy(){}
-        ~Nocopy(){}
+    protected:
+        Nocopy() = default;
+        ~Nocopy() = default;
 };
 }
