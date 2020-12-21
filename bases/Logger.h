@@ -27,9 +27,9 @@ public:
     static void InitLog(const char *file);
 
     static inline std::fstream& RecordLog() {
-        return logStream;
+        return logStream_;
     }
 
 private:
-    static std::fstream logStream;
+    static std::fstream logStream_;
 };

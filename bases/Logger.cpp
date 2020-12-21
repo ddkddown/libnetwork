@@ -1,7 +1,7 @@
 #include "Logger.h"
-std::fstream Logger::logStream;
+std::fstream Logger::logStream_;
 
 void Logger::InitLog(const char *file) {
     assert(NULL != file);
-    logStream.open(file,std::ios::app|std::ios::out);
+    logStream_.open(file,std::ios::app|std::ios::out);
 }
