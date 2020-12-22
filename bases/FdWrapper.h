@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <functional>
 
 extern "C" {
@@ -14,7 +15,7 @@ namespace {
 using WriteHandler = std::function<void()>;
 using ReadHandler = std::function<void()>;
 
-class FdWrapper : network::Nocopy {
+class FdWrapper : public network::Nocopy, public std::enable_shared_from_this<FdWrapper> {
 public:
     FdWrapper(int fd, ReadHandler reader = nullptr,
                     WriteHandler writer = nullptr)
@@ -28,6 +29,10 @@ public:
     
     int GetRawFd() {
         return fd_;
+    }
+
+    std::shared_ptr<FdWrapper> GetWrapper() {
+        return shared_from_this();
     }
 
     ReadHandler GetReader() {
