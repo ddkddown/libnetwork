@@ -9,14 +9,15 @@ extern "C" {
 }
 
 #include "Nocopyable.h"
-using namespace network;
 
-namespace {
-
+namespace network{
 using WriteHandler = std::function<void()>;
 using ReadHandler = std::function<void()>;
+};
 
-class FdWrapper : public network::Nocopy, public std::enable_shared_from_this<FdWrapper> {
+using namespace network;
+
+class FdWrapper : public std::enable_shared_from_this<FdWrapper> {
 public:
     FdWrapper(int fd, int type, ReadHandler reader = nullptr,
                             WriteHandler writer = nullptr)
@@ -24,6 +25,8 @@ public:
         assert(fd_ >= 0);
     }
 
+    FdWrapper():fd_(0), type_(0), reader_(nullptr), writer_(nullptr) {}
+    
     ~FdWrapper() {
         close(fd_);
     }
@@ -54,4 +57,3 @@ private:
     WriteHandler writer_;
     int type_;
 };
-}

@@ -18,6 +18,6 @@ void PollWrapper::deleteEvent(FdWrapper &fd) {
 
 void PollWrapper::Run() {
     struct epoll_event events[eventSize_];
-    auto ret = epoll_wait(epollFd_, events, eventSize_);
+    auto ret = epoll_wait(epollFd_, events, eventSize_, -1);
     HandleEvent();
 }

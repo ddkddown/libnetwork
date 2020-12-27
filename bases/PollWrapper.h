@@ -9,10 +9,11 @@ extern "C" {
 #include "Nocopyable.h"
 #include "Logger.h"
 #include "FdWrapper.h"
+using namespace network;
 
-namespace network {
-    using READ = EPOLLIN;
-    using WRITE = EPOLLOUT;
+namespace {
+    #define READ EPOLLIN;
+    #define WRITE EPOLLOUT;
 };
 
 class PollWrapper : public network::Nocopy {
@@ -26,7 +27,7 @@ public:
     }
 
     ~PollWrapper() {
-        close(epollfd);
+        close(epollFd_);
     }
     
     void addEvent(FdWrapper &fd);
