@@ -18,9 +18,9 @@ using ReadHandler = std::function<void()>;
 
 class FdWrapper : public network::Nocopy, public std::enable_shared_from_this<FdWrapper> {
 public:
-    FdWrapper(int fd, ReadHandler reader = nullptr,
-                    WriteHandler writer = nullptr)
-            :fd_(fd), reader_(reader), writer_(writer) {
+    FdWrapper(int fd, int type, ReadHandler reader = nullptr,
+                            WriteHandler writer = nullptr)
+            :fd_(fd), type_(type), reader_(reader), writer_(writer) {
         assert(fd_ >= 0);
     }
 
@@ -43,10 +43,15 @@ public:
     WriteHandler GetWriter() {
         return writer_;
     }
+
+    int GetEventType() {
+        return type_;
+    }
     
 private:
     int fd_;
     ReadHandler reader_;
     WriteHandler writer_;
+    int type_;
 };
 }
