@@ -12,8 +12,8 @@ extern "C" {
 using namespace network;
 
 namespace {
-    #define READ EPOLLIN;
-    #define WRITE EPOLLOUT;
+    #define READ EPOLLIN|EPOLLET;
+    #define WRITE EPOLLOUT|EPOLLET;
 };
 
 class PollWrapper : public network::Nocopy {
@@ -36,10 +36,10 @@ public:
 
     void Run();
 private:
-    void HandleEvent();
+    void HandleEvent(struct epoll_event *events, int size);
 private:
-    struct epoll_event event_;
     int epollFd_;
     int eventSize_;
     std::map<int, FdWrapper> fdMap_;
+    struct epoll_event event_;
 };

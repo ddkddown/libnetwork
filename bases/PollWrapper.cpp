@@ -19,5 +19,24 @@ void PollWrapper::deleteEvent(FdWrapper &fd) {
 void PollWrapper::Run() {
     struct epoll_event events[eventSize_];
     auto ret = epoll_wait(epollFd_, events, eventSize_, -1);
-    HandleEvent();
+    HandleEvent(&events[0], ret);
+}
+
+void PollWrapper::HandleEvent(struct epoll_event *events, 
+                                                int size) {
+    for(int i = 0; i < size; ++i) {
+        if(EPOLLIN & events[i].events) {
+            auto fdWrapper = fdMap_[events[i].data.fd];
+            fdWrapper.GetReader()();
+            continue;
+        }
+
+        if(EPOLLOUT & events[i].events) {
+            auto fdWrapper = fdMap_[events[i].data.fd];
+            fdWrapper.GetWriter()();
+            continue;
+        }
+
+        LOG_WARN<<"unknown events:"<<events[i].events;
+    }
 }
