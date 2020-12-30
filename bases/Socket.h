@@ -42,7 +42,11 @@ public:
         socklen_t peerLen = sizeof peerAddr_;
         return accept(sockFd_, (struct sockaddr*)&peerAddr_, &peerLen);
     }
-    
+
+    int GetSockFd() {
+        return sockFd_;
+    }
+
 private:
     struct sockaddr_in myAddr_;
     struct sockaddr_in peerAddr_;

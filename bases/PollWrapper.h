@@ -12,8 +12,8 @@ extern "C" {
 using namespace network;
 
 namespace {
-    #define READ EPOLLIN|EPOLLET;
-    #define WRITE EPOLLOUT|EPOLLET;
+    #define READ (EPOLLIN|EPOLLET)
+    #define WRITE (EPOLLOUT|EPOLLET)
 };
 
 class PollWrapper : public network::Nocopy {

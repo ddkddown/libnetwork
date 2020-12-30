@@ -38,5 +38,6 @@ void PollWrapper::HandleEvent(struct epoll_event *events,
         }
 
         LOG_WARN<<"unknown events:"<<events[i].events;
+        Run();
     }
 }
