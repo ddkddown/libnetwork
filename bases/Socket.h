@@ -18,8 +18,6 @@ public:
     }
 };
 
-IgnoreSig initSig;
-
 class SocketWrapper {
 public:
     SocketWrapper(int port) {

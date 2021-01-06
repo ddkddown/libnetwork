@@ -8,13 +8,8 @@ extern "C" {
 }
 #include "Nocopyable.h"
 #include "Logger.h"
-#include "FdWrapper.h"
+#include "TcpBase.h"
 using namespace network;
-
-namespace {
-    #define READ (EPOLLIN|EPOLLET)
-    #define WRITE (EPOLLOUT|EPOLLET)
-};
 
 class PollWrapper : public network::Nocopy {
 private:
@@ -30,9 +25,9 @@ public:
         close(epollFd_);
     }
     
-    void addEvent(FdWrapper &fd);
+    void addEvent(CSharedBaseRef fd);
 
-    void deleteEvent(FdWrapper &fd);
+    void deleteEvent(CSharedBaseRef fd);
 
     void Run();
 private:
@@ -40,6 +35,6 @@ private:
 private:
     int epollFd_;
     int eventSize_;
-    std::map<int, FdWrapper> fdMap_;
+    std::map<int, SharedBase> fdMap_;
     struct epoll_event event_;
 };
