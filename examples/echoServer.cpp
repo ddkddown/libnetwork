@@ -1,9 +1,11 @@
-#include "EchoServer.h"
+#include "ServerFac.h"
 #include "PollWrapper.h"
 #include "Logger.h"
 
 int main() {
-    auto server = make_shared<EchoServer>(9677, 10);
+    ServerFac factory;
+    auto server = factory.CreateEchoServer(9677, 10);
+    // make_shared<EchoServer>(9677, 10);
     Logger::InitLog("./test.log");
     LOG_INFO<<"start";
 
