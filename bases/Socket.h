@@ -21,9 +21,13 @@ public:
 class SocketWrapper {
 public:
     SocketWrapper(int port) {
+        port_ = port;
+    }
+
+    void Init() {
         sockFd_ = socket(AF_INET, SOCK_STREAM, 0);
         myAddr_.sin_family = AF_INET;
-        myAddr_.sin_port = htons(port);
+        myAddr_.sin_port = htons(port_);
         myAddr_.sin_addr.s_addr = htonl(INADDR_ANY);
     }
 
@@ -45,9 +49,13 @@ public:
         return sockFd_;
     }
 
+    void SetSockFd(int fd) {
+        sockFd_ = fd;
+    }
 private:
     struct sockaddr_in myAddr_;
     struct sockaddr_in peerAddr_;
     int sockFd_;
+    int port_;
 };
 };

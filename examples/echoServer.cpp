@@ -3,15 +3,15 @@
 #include "Logger.h"
 
 int main() {
+    auto poller = make_shared<PollWrapper>();
     ServerFac factory;
-    auto server = factory.CreateEchoServer(9677, 10);
-    // make_shared<EchoServer>(9677, 10);
+    auto server = factory.CreateEpollServer(9677, 10, poller);
     Logger::InitLog("./test.log");
     LOG_INFO<<"start";
 
-    PollWrapper poller;
-    poller.addEvent(server);
-    poller.Run();
+    
+    poller->addEvent(server);
+    poller->Run();
 
     LOG_INFO<<"end";
 }

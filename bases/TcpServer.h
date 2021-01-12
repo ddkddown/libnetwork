@@ -8,7 +8,7 @@ using CSharedServerRef = const std::shared_ptr<TcpServer>&;
 class TcpServer : public TcpBase{
 public:
     TcpServer(int port, int lSize)
-            :TcpBase(port),
+            :TcpBase(port, ALL),
              lSize_(lSize) {
         sock_.Bind();
         sock_.Listen(lSize_);

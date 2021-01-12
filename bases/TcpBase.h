@@ -17,10 +17,17 @@ using CSharedBaseRef = const std::shared_ptr<TcpBase>&;
 
 class TcpBase {
 public:
-    TcpBase(int port, int evenType = ALL)
+    TcpBase(int port, int evenType)
             :sock_(port),
-             evenType_(evenType){}
+             evenType_(evenType) {
+                sock_.Init();
+             }
 
+    TcpBase(int fd)
+            :sock_(0),
+             evenType_(ALL) {
+                sock_.SetSockFd(fd);
+            }
     ~TcpBase() {
         close(sock_.GetSockFd());
     }

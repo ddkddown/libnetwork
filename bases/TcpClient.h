@@ -7,9 +7,9 @@ using CSharedClientRef = const std::shared_ptr<TcpClient>&;
 
 class TcpClient : public TcpBase{
 public:
-    TcpClient(int port)
-            :TcpBase(port){}
+    TcpClient(int fd)
+            :TcpBase(fd){}
 
-    virtual void ReadHandle() = 0;
-    virtual void WriteHandle() = 0;
+    virtual void ReadHandle() {};
+    virtual void WriteHandle() {};
 };
