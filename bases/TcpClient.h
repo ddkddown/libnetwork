@@ -9,7 +9,7 @@ class TcpClient : public TcpBase{
 public:
     TcpClient(int fd)
             :TcpBase(fd){}
-
+            
     virtual void ReadHandle() {};
     virtual void WriteHandle() {};
 };

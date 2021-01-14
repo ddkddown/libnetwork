@@ -17,8 +17,10 @@ void PollWrapper::deleteEvent(CSharedBaseRef fd) {
 void PollWrapper::Run() {
 
     struct epoll_event events[eventSize_];
-    auto ret = epoll_wait(epollFd_, events, eventSize_, -1);
-    HandleEvent(&events[0], ret);
+    for(;;) {
+        auto ret = epoll_wait(epollFd_, events, eventSize_, -1);
+        HandleEvent(&events[0], ret);
+    }
 }
 
 void PollWrapper::HandleEvent(struct epoll_event *events, 
@@ -36,8 +38,11 @@ void PollWrapper::HandleEvent(struct epoll_event *events,
             continue;
         }
 
+        if(EPOLLRDHUP & events[i].events) {
+            fdMap_.erase(fdMap_.find(events[i].data.fd));
+            continue;
+        }
+
         LOG_WARN<<"unknown events:"<<events[i].events;
     }
-
-    this->Run();
 }
