@@ -1,5 +1,7 @@
 #include "TcpServer.h"
 
 int TcpServer::Accept() {
-    return sock_.Accept();
+    auto tmp = sock_.Accept();
+    LOG_DEBUG<<"get client: "<<tmp;
+    return tmp;
 }

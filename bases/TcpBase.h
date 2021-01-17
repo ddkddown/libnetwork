@@ -42,7 +42,12 @@ public:
         return evenType_;
     }
 
+    void CloseFd() {
+        sock_.CloseFd();
+    }
+
     virtual void ReadHandle() = 0;
+
     virtual void WriteHandle() = 0;
 protected:
     network::SocketWrapper sock_;

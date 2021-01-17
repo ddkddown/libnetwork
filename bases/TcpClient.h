@@ -10,6 +10,10 @@ public:
     TcpClient(int fd)
             :TcpBase(fd){}
             
-    virtual void ReadHandle() {};
-    virtual void WriteHandle() {};
+    virtual void ReadHandle() {
+        LOG_DEBUG<<"got read event";
+        CloseFd();
+    }
+    
+    virtual void WriteHandle() {}
 };

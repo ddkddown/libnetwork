@@ -9,6 +9,7 @@ extern "C" {
 #include <arpa/inet.h>
 #include <assert.h>
 }
+#include "Logger.h"
 
 namespace network {
 class IgnoreSig {
@@ -51,6 +52,11 @@ public:
 
     void SetSockFd(int fd) {
         sockFd_ = fd;
+    }
+
+    void CloseFd() {
+        LOG_DEBUG<<"call close fd";
+        close(sockFd_);
     }
 private:
     struct sockaddr_in myAddr_;
