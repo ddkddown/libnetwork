@@ -4,6 +4,7 @@
 extern "C" {
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <errno.h>
 }
 
 #include "Logger.h"
