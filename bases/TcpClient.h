@@ -11,7 +11,6 @@ public:
             :TcpBase(fd){}
             
     virtual void ReadHandle() {
-        LOG_DEBUG<<"got read event";
         CloseFd();
     }
     

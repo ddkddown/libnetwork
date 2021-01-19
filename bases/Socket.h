@@ -55,7 +55,6 @@ public:
     }
 
     void CloseFd() {
-        LOG_DEBUG<<"call close fd";
         close(sockFd_);
     }
 private:

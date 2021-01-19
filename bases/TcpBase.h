@@ -13,9 +13,12 @@ class TcpBase;
 
 using SharedBase = std::shared_ptr<TcpBase>;
 using CSharedBaseRef = const std::shared_ptr<TcpBase>&;
-#define READ (EPOLLIN|EPOLLRDHUP|EPOLLET)
-#define WRITE (EPOLLOUT|EPOLLET)
-#define ALL (EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET)
+//#define READ (EPOLLIN|EPOLLRDHUP|EPOLLT)
+#define READ (EPOLLIN|EPOLLRDHUP)
+//#define WRITE (EPOLLOUT|EPOLLET)
+#define WRITE (EPOLLOUT)
+//#define ALL (EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET)
+#define ALL (EPOLLIN|EPOLLOUT|EPOLLRDHUP)
 
 class TcpBase {
 public:
@@ -31,7 +34,6 @@ public:
                 sock_.SetSockFd(fd);
             }
     ~TcpBase() {
-        LOG_DEBUG<<"close socket";
         close(sock_.GetSockFd());
     }
 

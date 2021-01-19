@@ -28,24 +28,18 @@ void PollWrapper::HandleEvent(struct epoll_event *events,
                                                 int size) {
     for(int i = 0; i < size; ++i) {
         if(EPOLLIN & events[i].events) {
-            LOG_DEBUG<<"in";
             auto fd = fdMap_[events[i].data.fd];
-            LOG_DEBUG<<"fd is:"<<events[i].data.fd;
             fd->ReadHandle();
-            LOG_DEBUG<<"fdMap size:"<<fdMap_.size();
             continue;
         }
 
         if(EPOLLOUT & events[i].events) {
-            LOG_DEBUG<<"out";
             auto fd = fdMap_[events[i].data.fd];
             fd->WriteHandle();
             continue;
         }
 
         if(EPOLLRDHUP & events[i].events) {
-            std::cout<<"client close!";
-            LOG_DEBUG<<"client close!";
             auto tmp = fdMap_.find(events[i].data.fd);
             tmp->second->CloseFd();
             fdMap_.erase(tmp);

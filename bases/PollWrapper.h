@@ -18,7 +18,6 @@ public:
     PollWrapper(int eventSize = DEFAULT_SIZE)
                 :eventSize_(eventSize) {
         epollFd_ = epoll_create(eventSize_);
-        LOG_INFO<<"epoll created.";
     }
 
     ~PollWrapper() {
