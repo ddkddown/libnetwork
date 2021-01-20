@@ -8,7 +8,7 @@ using CSharedClientRef = const std::shared_ptr<TcpClient>&;
 class TcpClient : public TcpBase{
 public:
     TcpClient(int fd)
-            :TcpBase(fd){}
+            :TcpBase(fd, NULL, READ|EPOLLET){}
             
     virtual void ReadHandle() {
         CloseFd();

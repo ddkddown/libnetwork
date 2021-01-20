@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <iostream>
 
 extern "C" {
 #include <sys/epoll.h>
@@ -13,11 +14,8 @@ class TcpBase;
 
 using SharedBase = std::shared_ptr<TcpBase>;
 using CSharedBaseRef = const std::shared_ptr<TcpBase>&;
-//#define READ (EPOLLIN|EPOLLRDHUP|EPOLLT)
 #define READ (EPOLLIN|EPOLLRDHUP)
-//#define WRITE (EPOLLOUT|EPOLLET)
 #define WRITE (EPOLLOUT)
-//#define ALL (EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET)
 #define ALL (EPOLLIN|EPOLLOUT|EPOLLRDHUP)
 
 class TcpBase {
@@ -28,9 +26,10 @@ public:
                 sock_.Init();
              }
 
-    TcpBase(int fd)
+    //Fixme tmp will never used! just nullptr!
+    TcpBase(int fd, int *tmp, int evenType = READ)
             :sock_(0),
-             evenType_(ALL) {
+             evenType_(evenType) {
                 sock_.SetSockFd(fd);
             }
     ~TcpBase() {
