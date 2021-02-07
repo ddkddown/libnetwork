@@ -22,7 +22,9 @@ class Logger;
 class Logger{
 private:
     Logger(){}
-    ~Logger(){}
+    ~Logger() {
+        logStream_.close();
+    }
 public:
     static void InitLog(const char *file);
 
@@ -30,6 +32,9 @@ public:
         return logStream_;
     }
 
+    static void Flush() {
+        logStream_.flush();
+    }
 private:
     static std::fstream logStream_;
 };
