@@ -1,17 +1,16 @@
 #pragma once
 #include <iostream>
 #include "Channel.h"
-#include "EventLoop.h"
 using namespace std;
 
 class EventDispatch {
 public:
-    EventDispatch();
+    EventDispatch(void *loop);
     ~EventDispatch();
     int AddChannel(Channel &c);
     int DeleteChannel(Channel &c);
     int UpdateChannel(Channel &c);
-    int Dispatch(struct timeval &timeval);
+    void Dispatch();
     void Clear();
 private:
     enum {
@@ -21,6 +20,6 @@ private:
     int eventCount_;
     int fds_;
     int efd_;
-    struct epoll_event *events_;\
-    void *data;
+    void *loop_;
+    struct epoll_event *events_;
 };
