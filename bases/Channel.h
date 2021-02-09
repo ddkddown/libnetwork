@@ -3,6 +3,7 @@
 #include <functional>
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <arpa/inet.h>
 
 using namespace std;
 typedef int (*EventReadCallback)(void *data = nullptr);
@@ -16,6 +17,8 @@ public:
                 writeCall_(writeCall), data_(data) {}
     
     ~Channel() {
+        //对缓冲区数据进行清空
+        shutdown(fd_, SHUT_RDWR);
         close(fd_);
     }
 

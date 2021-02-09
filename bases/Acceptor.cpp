@@ -34,6 +34,7 @@ Acceptor::Acceptor(int port):port_(port) {
 }
 
 Acceptor::~Acceptor() {
+    shutdown(fd_, SHUT_RDWR);
     close(fd_);
 }
 
