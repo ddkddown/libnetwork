@@ -1,23 +1,27 @@
 #pragma once
-#include "TcpBase.h"
+#include <signal.h>
+#include "TcpConnection.h"
+#include "Acceptor.h"
+#include "EventLoop.h"
+#include "ThreadPool.h"
 
-class TcpServer;
-using SharedServer = std::shared_ptr<TcpServer>;
-using CSharedServerRef = const std::shared_ptr<TcpServer>&;
+//TODO 暴露出定制接口，例如clientRead, clientWrite, CloseHandler
 
-class TcpServer : public TcpBase{
+class TcpServer {
 public:
-    TcpServer(int port, int lSize)
-            :TcpBase(port, ALL),
-             lSize_(lSize) {
-        sock_.Bind();
-        sock_.Listen(lSize_);
-    }
-
-    int Accept();
-
-    virtual void ReadHandle() = 0;
-    virtual void WriteHandle() = 0;
+    TcpServer(int port, int poolSize);
+    virtual ~TcpServer();
+    virtual void Start();
 private:
-    int lSize_;
+    int HandleAccptor(void *data = nullptr);
+private:
+    class IgnoreSig {
+    public:
+        IgnoreSig() {
+            ::signal(SIGPIPE, SIG_IGN);
+        }        
+    };
+    static IgnoreSig initSig_;
+    Acceptor accpt_;
+    ThreadPool pool_;
 };

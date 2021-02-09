@@ -5,7 +5,7 @@ class Acceptor {
 public:
     Acceptor(int port);
     ~Acceptor();
-
+    int GetFd();
 private:
     enum {
         LISTENQ = 100

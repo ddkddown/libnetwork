@@ -36,3 +36,7 @@ Acceptor::Acceptor(int port):port_(port) {
 Acceptor::~Acceptor() {
     close(fd_);
 }
+
+int Acceptor::GetFd() {
+    return fd_;
+}
