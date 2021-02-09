@@ -1,4 +1,4 @@
-#pragma once;
+#pragma once
 #include <iostream>
 #include <map>
 #include <thread>
@@ -36,7 +36,7 @@ private:
         int event;
     };
 
-    bool quit_
+    bool quit_;
     int isHandlePending_;
     thread::id ownerThread_;
     int fds_[2];
