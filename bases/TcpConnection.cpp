@@ -1,8 +1,10 @@
 #include <string.h>
 #include "TcpConnection.h"
-TcpConnection::TcpConnection(int fd, int event, EventLoop *loop):fd_(fd), event_(event),
-                    loop_(loop), c_(fd_, event_, bind(&TcpConnection::HandleRead, *this),
-                    bind(&TcpConnection::HandleWrite, *this), loop_) {
+TcpConnection::TcpConnection(int fd, int event, EventLoop *loop,
+                            function<EventReadCallback> read,
+                            function<EventWriteCallback> write):fd_(fd), event_(event),
+                            loop_(loop), c_(fd_, event_, readHandler_, writeHandler_, loop_),
+                            readHandler_(read), writeHandler_(write) {
     loop_->AddChannel(c_);
 }
 
@@ -14,12 +16,4 @@ int TcpConnection::Read(char *dst, int size) {
 
 int TcpConnection::Write(char *src, int size) {
     return buff_.Write(src, size);
-}
-
-int TcpConnection::HandleRead(void *data) {
-    return buff_.ReaDataFromFd(fd_);
-}
-
-int TcpConnection::HandleWrite(void *data) {
-    return buff_.WriteDataToFd(fd_);
 }

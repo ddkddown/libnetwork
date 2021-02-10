@@ -9,7 +9,9 @@
 
 class TcpServer {
 public:
-    TcpServer(int port, int poolSize);
+    TcpServer(int port, int poolSize,
+            function<EventReadCallback> read,
+            function<EventWriteCallback> write);
     virtual ~TcpServer();
     virtual void Start();
 private:
@@ -22,6 +24,8 @@ private:
         }        
     };
     static IgnoreSig initSig_;
+    function<EventReadCallback> readHandler_;
+    function<EventWriteCallback> writeHandler_;
     Acceptor accpt_;
     ThreadPool pool_;
 };

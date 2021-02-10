@@ -5,8 +5,11 @@
 
 TcpServer::IgnoreSig TcpServer::initSig_;
 
-TcpServer::TcpServer(int port, int poolSize):
-                    accpt_(port), pool_(poolSize) {}
+TcpServer::TcpServer(int port, int poolSize
+                    function<EventReadCallback> read,
+                    function<EventWriteCallback> write):
+                    accpt_(port), pool_(poolSize),
+                    readHandler_(read), writeHandler_(write) {}
 
 TcpServer::~TcpServer() {}
 
@@ -26,7 +29,7 @@ int TcpServer::HandleAccptor(void *data = nullptr) {
     }
 
     EventLoop &loop = pool_.GetLoop();
-    TcpConnection conn(clienFd, EPOLLIN, &loop);
+    TcpConnection conn(clienFd, EPOLLIN, &loop, readHandler_, writeHandler_);
 
     return clienFd;
 }
