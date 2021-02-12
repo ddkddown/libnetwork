@@ -8,4 +8,7 @@ TcpConnection::TcpConnection(int fd, int event, EventLoop *loop,
     loop_->AddChannel(c_);
 }
 
-TcpConnection::~TcpConnection(){}
+TcpConnection::~TcpConnection() {
+    shutdown(fd_, SHUT_RDWR);
+    close(fd_);
+}

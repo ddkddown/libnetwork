@@ -31,11 +31,8 @@ public:
         writeCall_ = c.writeCall_;
         data_ = c.data_;
     }
-    
+
     ~Channel() {
-        //对缓冲区数据进行清空
-        shutdown(fd_, SHUT_RDWR);
-        close(fd_);
     }
 
     bool CheckEventEnable(int event);

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "EventDispatch.h"
 #include "EventLoop.h"
 #include "Logger.h"
@@ -6,10 +7,12 @@ EventDispatch::EventDispatch(void* loop):
                 eventCount_(0),fds_(0),
                 efd_(0),events_(nullptr),
                 loop_(loop) {
-    efd_ = epoll_create(0);
+    efd_ = epoll_create(1);
     if(-1 == efd_) {
-        LOG_ERR<<"create epoll failed!";
+        LOG_ERR<<"create epoll failed!"<<strerror(errno) ;
     }
+
+    LOG_DEBUG<<"efd is "<<efd_;
 
     try {
         events_ = new epoll_event[MAX_EVENT];
@@ -28,8 +31,11 @@ int EventDispatch::AddChannel(Channel &c) {
     event.events = c.GetEvent();
     
     if(-1 == epoll_ctl(efd_, EPOLL_CTL_ADD, c.GetFd(), &event)) {
-        LOG_ERR<<"error while epoll add fd";
+        LOG_ERR<<"error while epoll add fd"<<strerror(errno)<<efd_<<c.GetFd();
         return -1;
+    }
+    else {
+        LOG_DEBUG<<"add fd succ";
     }
 
     return 0;

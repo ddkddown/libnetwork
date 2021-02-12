@@ -1,4 +1,5 @@
 #include "EchoServer.h"
+#include "Logger.h"
 
 int EchoServer::ReadHandler(int fd, void *data) {
     char buff[1024] = {0};
@@ -13,7 +14,7 @@ int EchoServer::WriteHandler(int fd, void *data) {
 
 EchoServer::EchoServer(int port, int poolSize):
                         TcpServer(port, poolSize) {
-    TcpServer::SetWriter(bind(&EchoServer::ReadHandler, this,
+    TcpServer::SetReader(bind(&EchoServer::ReadHandler, this,
                         std::placeholders::_1, std::placeholders::_2));
     TcpServer::SetWriter(bind(&EchoServer::WriteHandler, this,
                         std::placeholders::_1, std::placeholders::_2));
@@ -24,6 +25,8 @@ EchoServer::~EchoServer() {
 }
 
 int main() {
-    EchoServer echo(9677, 10);
+    Logger::InitLog("./echo.log");
+    EchoServer echo(9677, 1);
     echo.Start();
+    sleep(10000);
 }

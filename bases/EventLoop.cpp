@@ -5,6 +5,7 @@ EventLoop::EventLoop():dispatcher_(this),quit_(false){
     if(-1 == pipe(fds_)) {
         LOG_ERR<<"create pipe failed!";
     }
+    LOG_DEBUG<<"fds_[0] is "<<fds_[0]<<"fds_[1] is "<<fds_[1];
 
     Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this, 
             std::placeholders::_1, std::placeholders::_2), nullptr, nullptr);
