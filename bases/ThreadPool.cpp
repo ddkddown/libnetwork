@@ -9,7 +9,7 @@ ThreadPool::ThreadPool(int size):size_(size), position_(1),
     }
 
     for (int i = 0; i < size_; ++i) {
-        pool_.push_back(LoopThread());
+        pool_.push_back(make_shared<LoopThread>());
     }
 }
 
@@ -19,7 +19,7 @@ EventLoop& ThreadPool::GetLoop() {
 
     // 只有一个mainThread时返回mainLoop
     if(1 == size_) {
-        return pool_[0].GetLoop();
+        return pool_[0]->GetLoop();
     }
 
     //轮询(除了mainThread)
@@ -28,9 +28,9 @@ EventLoop& ThreadPool::GetLoop() {
         position_++;
     }
 
-    return pool_[position_++].GetLoop(); 
+    return pool_[position_++]->GetLoop(); 
 }
 
 EventLoop& ThreadPool::GetMainLoop() {
-    return pool_[0].GetLoop();
+    return pool_[0]->GetLoop();
 }

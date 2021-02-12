@@ -5,21 +5,21 @@
 
 TcpServer::IgnoreSig TcpServer::initSig_;
 
-TcpServer::TcpServer(int port, int poolSize
-                    function<EventReadCallback> read,
-                    function<EventWriteCallback> write):
+TcpServer::TcpServer(int port, int poolSize):
                     accpt_(port), pool_(poolSize),
-                    readHandler_(read), writeHandler_(write) {}
+                    readHandler_(nullptr), writeHandler_(nullptr) {}
 
 TcpServer::~TcpServer() {}
 
 void TcpServer::Start() {
     Channel c(accpt_.GetFd(), EPOLLIN, 
-            bind(&TcpServer::HandleAccptor, *this), nullptr, &pool_.GetMainLoop());
+            bind(&TcpServer::HandleAcceptor, this,
+            std::placeholders::_1, std::placeholders::_2),
+            nullptr, &pool_.GetMainLoop());
     pool_.GetMainLoop().AddChannel(c);
 }
 
-int TcpServer::HandleAccptor(void *data = nullptr) {
+int TcpServer::HandleAcceptor(int fd, void *data) {
     struct sockaddr_in clienAddr;
     socklen_t clienLen = sizeof(clienAddr);
     int clienFd = accept(accpt_.GetFd(), (struct sockaddr*)&clienAddr, &clienLen);
@@ -32,4 +32,15 @@ int TcpServer::HandleAccptor(void *data = nullptr) {
     TcpConnection conn(clienFd, EPOLLIN, &loop, readHandler_, writeHandler_);
 
     return clienFd;
+}
+
+int TcpServer::GetAcceptFd() {
+    return accpt_.GetFd();
+}
+
+void TcpServer::SetReader(EventReadCallback read) {
+    readHandler_ = read;
+}
+void TcpServer::SetWriter(EventWriteCallback write) {
+    writeHandler_ = write;
 }

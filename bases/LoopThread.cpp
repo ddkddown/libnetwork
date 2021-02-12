@@ -2,7 +2,7 @@
 #include "LoopThread.h"
 
 LoopThread::LoopThread():t_(nullptr) {
-    t_ = make_shared<thread>(bind(&LoopThread::run, *this));
+    t_ = make_shared<thread>(bind(&LoopThread::run, this));
     assert(nullptr != t_);
 }
 

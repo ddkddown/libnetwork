@@ -9,13 +9,15 @@
 
 class TcpServer {
 public:
-    TcpServer(int port, int poolSize,
-            function<EventReadCallback> read,
-            function<EventWriteCallback> write);
+    TcpServer(int port, int poolSize);
     virtual ~TcpServer();
-    virtual void Start();
+    void Start();
+protected:
+    void SetReader(EventReadCallback read);
+    void SetWriter(EventWriteCallback write);
+    int GetAcceptFd();
 private:
-    int HandleAccptor(void *data = nullptr);
+    int HandleAcceptor(int fd, void *data);
 private:
     class IgnoreSig {
     public:
@@ -24,8 +26,8 @@ private:
         }        
     };
     static IgnoreSig initSig_;
-    function<EventReadCallback> readHandler_;
-    function<EventWriteCallback> writeHandler_;
+    EventReadCallback readHandler_;
+    EventWriteCallback writeHandler_;
     Acceptor accpt_;
     ThreadPool pool_;
 };

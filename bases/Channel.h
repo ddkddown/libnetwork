@@ -6,15 +6,31 @@
 #include <arpa/inet.h>
 
 using namespace std;
-typedef int (*EventReadCallback)(void *data = nullptr);
-typedef int (*EventWriteCallback)(void *data = nullptr);
+using EventReadCallback = function<int(int,void*)>;
+using EventWriteCallback = function<int(int, void*)>;
 
 class Channel {
 public:
-    Channel(int fd, int event, function<EventReadCallback> readCall,
-                function<EventWriteCallback> writeCall, void *data):
+    Channel(int fd, int event, EventReadCallback readCall,
+                EventWriteCallback writeCall, void *data):
                 fd_(fd), event_(event), readCall_(readCall),
                 writeCall_(writeCall), data_(data) {}
+    
+    Channel(const Channel& c) {
+        fd_ = c.fd_;
+        event_ = c.event_;
+        readCall_ = c.readCall_;
+        writeCall_ = c.writeCall_;
+        data_ = c.data_;
+    }
+
+    Channel& operator = (const Channel &c) {
+        fd_ = c.fd_;
+        event_ = c.event_;
+        readCall_ = c.readCall_;
+        writeCall_ = c.writeCall_;
+        data_ = c.data_;
+    }
     
     ~Channel() {
         //对缓冲区数据进行清空
@@ -36,17 +52,17 @@ public:
         return event_;
     }
 
-    function<EventReadCallback> GetReadCall() {
+    EventReadCallback GetReadCall() {
         return readCall_;
     }
 
-    function<EventWriteCallback> GetWriteCall() {
+    EventWriteCallback GetWriteCall() {
         return writeCall_;
     } 
 private:
     int fd_;
     int event_;
-    function<EventReadCallback> readCall_;
-    function<EventWriteCallback> writeCall_;
+    EventReadCallback readCall_;
+    EventWriteCallback writeCall_;
     void *data_;
 };

@@ -6,8 +6,9 @@ EventLoop::EventLoop():dispatcher_(this),quit_(false){
         LOG_ERR<<"create pipe failed!";
     }
 
-    Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this), nullptr, this);
-    channMap_[fds_[0]] = c;
+    Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this, 
+            std::placeholders::_1, std::placeholders::_2), nullptr, nullptr);
+    channMap_.insert(pair<int, Channel>(fds_[0], c));
     dispatcher_.AddChannel(c);
 }
 
@@ -21,7 +22,7 @@ int EventLoop::Quit() {
     write(fds_[1], &a, 1);
 }
 
-int EventLoop::NotifyQuit(void *data) {
+int EventLoop::NotifyQuit(int fd, void *data) {
     quit_ = true;
 }
 
@@ -50,7 +51,7 @@ void EventLoop::EventActive(int fd, int event) {
         return;
     }
 
-    queueNode tmp = {c, ACTIVE, event};
+    queueNode tmp = {c->second, ACTIVE, event};
     pendingQueue_.push(tmp);
 }
 
@@ -72,19 +73,18 @@ void EventLoop::HandlePendingChannel() {
         {
         case ACTIVE:
             if(node.event & EPOLLIN) {
-                node.c.GetReadCall()();
+                node.c.GetReadCall()(node.c.GetFd(), nullptr);
             }
 
             if(node.event & EPOLLOUT) {
-                node.c.GetWriteCall()();
+                node.c.GetWriteCall()(node.c.GetFd(), nullptr);
             }
             break;
         case ADD:
-            channMap_[node.c.GetFd()] = node.c;
+            channMap_.insert(pair<int, Channel>(node.c.GetFd(), node.c));
             dispatcher_.AddChannel(node.c);
             break;
         case UPDATE:
-            channMap_[node.c.GetFd()] = node.c;
             dispatcher_.UpdateChannel(node.c);
             break;
         case DELETE:

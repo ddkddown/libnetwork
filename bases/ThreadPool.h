@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <memory>
 #include "LoopThread.h"
 
 class ThreadPool {
@@ -12,5 +13,5 @@ private:
     int mainThread_;
     int size_;
     int position_;
-    vector<LoopThread> pool_;
+    vector<shared_ptr<LoopThread>> pool_;
 };
