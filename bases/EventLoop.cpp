@@ -1,5 +1,11 @@
+#include <fcntl.h>
+#include <errno.h>
 #include "EventLoop.h"
 #include "Logger.h"
+
+static bool CheckFileAvaliable(int fd) {
+    return !(-1 == fcntl(fd, F_GETFD, NULL) && errno == EBADF);
+}
 
 EventLoop::EventLoop():dispatcher_(this),quit_(false){
     if(-1 == pipe(fds_)) {
@@ -85,12 +91,16 @@ void EventLoop::HandlePendingChannel() {
         {
         case ACTIVE:
             if(node.event & EPOLLIN) {
-                //TODO 判断fd是否还有效
                 node.c.GetReadCall()(node.c.GetFd(), nullptr);
             }
 
             if(node.event & EPOLLOUT) {
                 node.c.GetWriteCall()(node.c.GetFd(), nullptr);
+            }
+
+            if(!CheckFileAvaliable(node.c.GetFd())) {
+                queueNode tmp = {node.c, DELETE, 0};
+                pendingQueue_.push(tmp);
             }
             break;
         case ADD:
