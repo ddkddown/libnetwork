@@ -5,7 +5,6 @@ EventLoop::EventLoop():dispatcher_(this),quit_(false){
     if(-1 == pipe(fds_)) {
         LOG_ERR<<"create pipe failed!";
     }
-    LOG_DEBUG<<"fds_[0] is "<<fds_[0]<<"fds_[1] is "<<fds_[1];
 
     Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this, 
             std::placeholders::_1, std::placeholders::_2), nullptr, nullptr);
@@ -14,33 +13,45 @@ EventLoop::EventLoop():dispatcher_(this),quit_(false){
 }
 
 EventLoop::~EventLoop() {
+    for(auto i : channMap_) {
+        close(i.first);
+    }
+
     close(fds_[0]);
     close(fds_[1]);
 }
 
 int EventLoop::Quit() {
-    char a = 'a';
+    char a = 'q';
     write(fds_[1], &a, 1);
 }
 
 int EventLoop::NotifyQuit(int fd, void *data) {
-    quit_ = true;
+    char c;
+    read(fds_[0], &c, 1);
+    if('q' == c) {
+        quit_ = true;
+    }
 }
 
 void EventLoop::AddChannel(Channel &c) {
-    lock_guard<mutex> lck(m_);
+    char a = 'a';
+    write(fds_[1], &a, 1);
     queueNode tmp = {c, ADD, 0};
     pendingQueue_.push(tmp);
 }
 
+void EventLoop::AddAcceptor(Channel &c) {
+    channMap_.insert(pair<int, Channel>(c.GetFd(), c));
+    dispatcher_.AddChannel(c);
+}
+
 void EventLoop::DelChannel(Channel &c) {
-    lock_guard<mutex> lck(m_);
     queueNode tmp = {c, DELETE, 0};
     pendingQueue_.push(tmp);
 }
 
 void EventLoop::UpdateChannel(Channel &c) {
-    lock_guard<mutex> lck(m_);
     queueNode tmp = {c, UPDATE, 0};
     pendingQueue_.push(tmp);
 }
@@ -64,16 +75,17 @@ void EventLoop::Run() {
 }
 
 void EventLoop::HandlePendingChannel() {
-    lock_guard<mutex> lck(m_);
     while(!pendingQueue_.empty()) {
         auto node = pendingQueue_.front();
         pendingQueue_.pop();
 
+        LOG_DEBUG<<"node fd" <<node.c.GetFd()<<endl;
         //TODO 状态机修改
         switch (node.type)
         {
         case ACTIVE:
             if(node.event & EPOLLIN) {
+                //TODO 判断fd是否还有效
                 node.c.GetReadCall()(node.c.GetFd(), nullptr);
             }
 

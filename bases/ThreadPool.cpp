@@ -34,3 +34,9 @@ EventLoop& ThreadPool::GetLoop() {
 EventLoop& ThreadPool::GetMainLoop() {
     return pool_[0]->GetLoop();
 }
+
+void ThreadPool::Run() {
+    for (int i = 0; i < pool_.size(); ++i) {
+        pool_[i]->run();
+    }
+}

@@ -7,7 +7,6 @@ public:
     LoopThread();
     ~LoopThread();
     EventLoop& GetLoop();
-private:
     void run();
 private:
     // loop_必须在t_调用前构造

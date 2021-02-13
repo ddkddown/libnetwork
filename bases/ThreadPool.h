@@ -9,6 +9,7 @@ public:
     ~ThreadPool();
     EventLoop& GetLoop();
     EventLoop& GetMainLoop();
+    void Run();
 private:
     int mainThread_;
     int size_;

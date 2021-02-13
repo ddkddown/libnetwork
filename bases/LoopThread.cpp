@@ -1,10 +1,8 @@
 #include <assert.h>
 #include "LoopThread.h"
+#include "Logger.h"
 
-LoopThread::LoopThread():t_(nullptr) {
-    t_ = make_shared<thread>(bind(&LoopThread::run, this));
-    assert(nullptr != t_);
-}
+LoopThread::LoopThread():t_(nullptr) {}
 
 LoopThread::~LoopThread() {
     loop_.Quit();
@@ -12,7 +10,7 @@ LoopThread::~LoopThread() {
 }
 
 void LoopThread::run() {
-    loop_.Run();
+    t_ = make_shared<thread>(bind(&EventLoop::Run, &loop_));
 }
 
 EventLoop& LoopThread::GetLoop() {

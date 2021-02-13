@@ -9,6 +9,4 @@ TcpConnection::TcpConnection(int fd, int event, EventLoop *loop,
 }
 
 TcpConnection::~TcpConnection() {
-    shutdown(fd_, SHUT_RDWR);
-    close(fd_);
 }

@@ -7,16 +7,19 @@ TcpServer::IgnoreSig TcpServer::initSig_;
 
 TcpServer::TcpServer(int port, int poolSize):
                     accpt_(port), pool_(poolSize),
-                    readHandler_(nullptr), writeHandler_(nullptr) {}
+                    readHandler_(nullptr), writeHandler_(nullptr) {
+    LOG_DEBUG<<"accpt_ fd"<<accpt_.GetFd();
+    Channel c(accpt_.GetFd(), EPOLLIN, 
+    bind(&TcpServer::HandleAcceptor, this,
+        std::placeholders::_1, std::placeholders::_2),
+        nullptr, &pool_.GetMainLoop());
+    pool_.GetMainLoop().AddAcceptor(c);
+}
 
 TcpServer::~TcpServer() {}
 
 void TcpServer::Start() {
-    Channel c(accpt_.GetFd(), EPOLLIN, 
-            bind(&TcpServer::HandleAcceptor, this,
-            std::placeholders::_1, std::placeholders::_2),
-            nullptr, &pool_.GetMainLoop());
-    pool_.GetMainLoop().AddChannel(c);
+    pool_.Run();
 }
 
 int TcpServer::HandleAcceptor(int fd, void *data) {
@@ -29,8 +32,9 @@ int TcpServer::HandleAcceptor(int fd, void *data) {
     }
 
     EventLoop &loop = pool_.GetLoop();
-    TcpConnection conn(clienFd, EPOLLIN, &loop, readHandler_, writeHandler_);
+    TcpConnection conn(clienFd, EPOLLIN|EPOLLET, &loop, readHandler_, writeHandler_);
 
+    LOG_DEBUG<<"accept fd"<<clienFd <<endl;
     return clienFd;
 }
 

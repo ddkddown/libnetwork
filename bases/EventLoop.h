@@ -16,6 +16,7 @@ public:
     void AddChannel(Channel &c);
     void UpdateChannel(Channel &c);
     void DelChannel(Channel &c);
+    void AddAcceptor(Channel &c);
     void Run();
     int Quit();
 private:
@@ -40,7 +41,6 @@ private:
     int isHandlePending_;
     thread::id ownerThread_;
     int fds_[2];
-    mutex m_;
     queue<queueNode> pendingQueue_;
     map<int, Channel> channMap_;
     EventDispatch dispatcher_;

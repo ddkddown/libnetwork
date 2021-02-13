@@ -68,8 +68,10 @@ int EventDispatch::UpdateChannel(Channel &c) {
 }
 
 void EventDispatch::Dispatch() {
+    LOG_DEBUG<<"epoll waiting "<<this_thread::get_id()<<endl;
     auto num = epoll_wait(efd_, events_, MAX_EVENT, -1);
     EventLoop *loop = static_cast<EventLoop*>(loop_);
+    LOG_DEBUG<<"epoll recv events num: "<<num <<" "<<this_thread::get_id()<<endl;
     for(int i = 0; i < num; ++i) {
         loop->EventActive(events_[i].data.fd, events_[i].events);
     }
