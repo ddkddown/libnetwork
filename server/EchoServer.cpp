@@ -3,11 +3,25 @@
 
 int EchoServer::ReadHandler(int fd, void *data) {
     char buff[1024] = {0};
-    if(0 == recv(fd, buff, 1024, 0)) {
-        close(fd);
-    }
-    LOG_DEBUG<<"echo read: "<<buff<<endl;
-    send(fd, buff, 1024, 0);
+    int ret = 0;
+    do
+    {
+        ret = recv(fd, buff, 1024, 0);
+        if(0 == ret) {
+            close(fd);
+            break;
+        }
+
+        if(-1 == ret && errno == EAGAIN) {
+            continue;
+        }
+
+        LOG_DEBUG<<"echo read: "<<buff<<endl;
+        send(fd, buff, 1024, 0);
+        break;
+        
+    } while (1);
+
     return 0;
 }
 
