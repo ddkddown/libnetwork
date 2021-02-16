@@ -1,8 +1,7 @@
 #include "ThreadPool.h"
 #include "Logger.h"
 
-ThreadPool::ThreadPool(int size):size_(size), position_(1),
-                                mainThread_(0) {
+ThreadPool::ThreadPool(int size):size_(size), position_(0) {
     if(size_ <= 0) {
         LOG_INFO<<"input size:"<<size<<" make it default 1";
         size_ = 1;
@@ -16,27 +15,19 @@ ThreadPool::ThreadPool(int size):size_(size), position_(1),
 ThreadPool::~ThreadPool() {}
 
 EventLoop& ThreadPool::GetLoop() {
-
-    // 只有一个mainThread时返回mainLoop
-    if(1 == size_) {
-        return pool_[0]->GetLoop();
-    }
-
-    //轮询(除了mainThread)
+    //轮询(除了mainLoop)
     position_ %= size_;
-    if(0 == position_) {
-        position_++;
-    }
-
     return pool_[position_++]->GetLoop(); 
 }
 
 EventLoop& ThreadPool::GetMainLoop() {
-    return pool_[0]->GetLoop();
+    return mainLoop_;
 }
 
 void ThreadPool::Run() {
     for (int i = 0; i < pool_.size(); ++i) {
         pool_[i]->run();
     }
+
+    mainLoop_.Run();
 }

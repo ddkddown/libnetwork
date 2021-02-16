@@ -11,8 +11,8 @@ public:
     EventLoop& GetMainLoop();
     void Run();
 private:
-    int mainThread_;
     int size_;
     int position_;
+    EventLoop mainLoop_;
     vector<shared_ptr<LoopThread>> pool_;
 };

@@ -12,6 +12,7 @@ int EchoServer::ReadHandler(int fd, void *data) {
             break;
         }
 
+        //TODO EWOULDBLOCK and EINTR
         if(-1 == ret && errno == EAGAIN) {
             continue;
         }
@@ -19,7 +20,7 @@ int EchoServer::ReadHandler(int fd, void *data) {
         LOG_DEBUG<<"echo read: "<<buff<<endl;
         send(fd, buff, 1024, 0);
         break;
-        
+
     } while (1);
 
     return 0;
@@ -45,5 +46,4 @@ int main() {
     Logger::InitLog("./echo.log");
     EchoServer echo(9677, 2);
     echo.Start();
-    sleep(10000);
 }
