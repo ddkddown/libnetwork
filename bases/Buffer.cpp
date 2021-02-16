@@ -27,3 +27,11 @@ void Buffer::SendToFd(int fd) {
 
     send(fd, &*buff_.begin(), buff_.size(), 0);
 }
+
+void Buffer::AppenData(const char *data, int len) {
+    if((buff_.capacity() - buff_.size()) < len) {
+        buff_.resize(buff_.size() + len);
+    }
+
+    memcpy(&*(buff_.begin()+buff_.size()), data, len);
+}
