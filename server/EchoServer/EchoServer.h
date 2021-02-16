@@ -3,6 +3,6 @@ class EchoServer : public TcpServer{
 public:
     EchoServer(int port, int poolSize);
     ~EchoServer();
-    int ReadHandler(int fd, void *data);
-    int WriteHandler(int fd, void *data);
+    void ReadCompleteCall(TcpConnection &conn, Buffer &buff);
+    void WriteCompleteCall(TcpConnection &conn, Buffer &buff);
 };

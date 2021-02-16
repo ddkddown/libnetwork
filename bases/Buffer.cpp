@@ -35,3 +35,14 @@ void Buffer::AppenData(const char *data, int len) {
 
     memcpy(&*(buff_.begin()+buff_.size()), data, len);
 }
+
+int Buffer::GetData(char *dst, int len) {
+    if(len > buff_.size()) {
+        len = buff_.size();
+    }
+
+    memcpy(dst, &*buff_.begin(), len);
+    buff_.erase(buff_.begin(), buff_.begin()+len);
+    
+    return len;
+}

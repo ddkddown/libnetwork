@@ -15,6 +15,7 @@ public:
     int ReadFromFd(int fd);
     void SendToFd(int fd);
     void AppenData(const char *data, int len);
+    int GetData(char *dst, int len);
 
 private:
     vector<char> buff_;

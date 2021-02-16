@@ -1,6 +1,9 @@
 #include "EchoServer.h"
 #include "Logger.h"
 
+
+//TODO 修改handle read
+/*
 int EchoServer::ReadHandler(int fd, void *data) {
     char buff[1024] = {0};
     int ret = 0;
@@ -25,17 +28,26 @@ int EchoServer::ReadHandler(int fd, void *data) {
 
     return 0;
 }
+*/
+void EchoServer::ReadCompleteCall(TcpConnection &conn, Buffer &buff) {
+    char tmp[1024] = {0};
+    int len = buff.GetData(tmp, 1024);
+    LOG_DEBUG<<"echo read: "<<tmp<<endl;
+    send(conn.GetFd(), tmp, len, 0);
 
-int EchoServer::WriteHandler(int fd, void *data) {
-    return 0;
+    return;
+}
+
+void EchoServer::WriteCompleteCall(TcpConnection &conn, Buffer &buff) {
+    return;
 }
 
 EchoServer::EchoServer(int port, int poolSize):
                         TcpServer(port, poolSize) {
-    TcpServer::SetReader(bind(&EchoServer::ReadHandler, this,
-                        std::placeholders::_1, std::placeholders::_2));
-    TcpServer::SetWriter(bind(&EchoServer::WriteHandler, this,
-                        std::placeholders::_1, std::placeholders::_2));
+    TcpServer::SetReader(bind(&EchoServer::ReadCompleteCall, this,
+                        placeholders::_1, placeholders::_2));
+    TcpServer::SetWriter(bind(&EchoServer::WriteCompleteCall, this,
+                        placeholders::_1, placeholders::_2));
 }
 
 EchoServer::~EchoServer() {

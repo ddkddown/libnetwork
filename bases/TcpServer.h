@@ -13,11 +13,11 @@ public:
     virtual ~TcpServer();
     void Start();
 protected:
-    void SetReader(EventReadCallback read);
-    void SetWriter(EventWriteCallback write);
+    void SetReader(ReadCompleteCallBk read);
+    void SetWriter(WriteCompleteCallBk write);
     int GetAcceptFd();
 private:
-    int HandleAcceptor(int fd, void *data);
+    int HandleAcceptor(void *data);
 private:
     class IgnoreSig {
     public:
@@ -26,8 +26,8 @@ private:
         }        
     };
     static IgnoreSig initSig_;
-    EventReadCallback readHandler_;
-    EventWriteCallback writeHandler_;
+    ReadCompleteCallBk readHandler_;
+    WriteCompleteCallBk writeHandler_;
     Acceptor accpt_;
     ThreadPool pool_;
 };

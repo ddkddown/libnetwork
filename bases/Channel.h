@@ -6,8 +6,8 @@
 #include <arpa/inet.h>
 
 using namespace std;
-using EventReadCallback = function<int(int,void*)>;
-using EventWriteCallback = function<int(int, void*)>;
+using EventReadCallback = function<int(void*)>;
+using EventWriteCallback = function<int(void*)>;
 
 class Channel {
 public:

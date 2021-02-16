@@ -10,9 +10,9 @@ TcpServer::TcpServer(int port, int poolSize):
                     readHandler_(nullptr), writeHandler_(nullptr) {
     LOG_DEBUG<<"accpt_ fd"<<accpt_.GetFd();
     Channel c(accpt_.GetFd(), EPOLLIN, 
-    bind(&TcpServer::HandleAcceptor, this,
-        std::placeholders::_1, std::placeholders::_2),
-        nullptr, &pool_.GetMainLoop());
+            bind(&TcpServer::HandleAcceptor,
+            this,std::placeholders::_1),
+            nullptr, &pool_.GetMainLoop());
     pool_.GetMainLoop().AddAcceptor(c);
 }
 
@@ -22,7 +22,7 @@ void TcpServer::Start() {
     pool_.Run();
 }
 
-int TcpServer::HandleAcceptor(int fd, void *data) {
+int TcpServer::HandleAcceptor(void *data) {
     struct sockaddr_in clienAddr;
     socklen_t clienLen = sizeof(clienAddr);
     int clienFd = accept(accpt_.GetFd(), (struct sockaddr*)&clienAddr, &clienLen);
@@ -42,9 +42,9 @@ int TcpServer::GetAcceptFd() {
     return accpt_.GetFd();
 }
 
-void TcpServer::SetReader(EventReadCallback read) {
+void TcpServer::SetReader(ReadCompleteCallBk read) {
     readHandler_ = read;
 }
-void TcpServer::SetWriter(EventWriteCallback write) {
+void TcpServer::SetWriter(WriteCompleteCallBk write) {
     writeHandler_ = write;
 }

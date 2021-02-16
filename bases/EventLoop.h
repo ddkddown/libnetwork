@@ -22,7 +22,7 @@ public:
 private:
     void EventActive(int fd, int event);
     void HandlePendingChannel();
-    int NotifyQuit(int fd, void *data);
+    int NotifyQuit(void *data);
 private:
     enum {
         ADD = 0,

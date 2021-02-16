@@ -13,7 +13,7 @@ EventLoop::EventLoop():dispatcher_(this),quit_(false){
     }
 
     Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this, 
-            std::placeholders::_1, std::placeholders::_2), nullptr, nullptr);
+            std::placeholders::_1), nullptr, nullptr);
     channMap_.insert(pair<int, Channel>(fds_[0], c));
     dispatcher_.AddChannel(c);
 }
@@ -32,7 +32,7 @@ int EventLoop::Quit() {
     write(fds_[1], &a, 1);
 }
 
-int EventLoop::NotifyQuit(int fd, void *data) {
+int EventLoop::NotifyQuit(void *data) {
     char c;
     read(fds_[0], &c, 1);
     if('q' == c) {
@@ -91,11 +91,11 @@ void EventLoop::HandlePendingChannel() {
         {
         case ACTIVE:
             if(node.event & EPOLLIN) {
-                node.c.GetReadCall()(node.c.GetFd(), nullptr);
+                node.c.GetReadCall()(nullptr);
             }
 
             if(node.event & EPOLLOUT) {
-                node.c.GetWriteCall()(node.c.GetFd(), nullptr);
+                node.c.GetWriteCall()(nullptr);
             }
 
             if(!CheckFileAvaliable(node.c.GetFd())) {
