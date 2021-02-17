@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include "Logger.h"
 
 using namespace std;
 using EventReadCallback = function<int(void*)>;
@@ -11,17 +12,18 @@ using EventWriteCallback = function<int(void*)>;
 
 class Channel {
 public:
-    Channel(int fd, int event, EventReadCallback readCall,
-                EventWriteCallback writeCall, void *data):
-                fd_(fd), event_(event), readCall_(readCall),
-                writeCall_(writeCall), data_(data) {}
+    Channel(int fd, int event, EventReadCallback readCall = nullptr,
+                EventWriteCallback writeCall = nullptr, void *data = nullptr):
+                fd_(fd), event_(event), readCall_(move(readCall)),
+                writeCall_(move(writeCall)), data_(data) {}
     
     Channel(const Channel& c) {
         fd_ = c.fd_;
         event_ = c.event_;
+        data_ = c.data_;
         readCall_ = c.readCall_;
         writeCall_ = c.writeCall_;
-        data_ = c.data_;
+
     }
 
     Channel& operator = (const Channel &c) {
@@ -30,6 +32,7 @@ public:
         readCall_ = c.readCall_;
         writeCall_ = c.writeCall_;
         data_ = c.data_;
+        
     }
 
     ~Channel() {
@@ -49,13 +52,18 @@ public:
         return event_;
     }
 
-    EventReadCallback GetReadCall() {
+    const EventReadCallback GetReadCall() {
         return readCall_;
     }
 
-    EventWriteCallback GetWriteCall() {
+    const EventWriteCallback GetWriteCall() {
         return writeCall_;
-    } 
+    }
+
+    void setReadCall(EventReadCallback cb)
+    { readCall_ = std::move(cb); }
+    void setWriteCallback(EventWriteCallback cb)
+    { writeCall_ = std::move(cb); }
 private:
     int fd_;
     int event_;

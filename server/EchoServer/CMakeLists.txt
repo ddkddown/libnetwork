@@ -10,6 +10,8 @@ include_directories(../../bases/)
 # 设置
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_CXX_FLAGS "-g")
+
 aux_source_directory(../../bases/ SOURCES)
 
 add_executable(${PROJECT_NAME} EchoServer.cpp ${SOURCES})

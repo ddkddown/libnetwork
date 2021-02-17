@@ -29,16 +29,16 @@ int EchoServer::ReadHandler(int fd, void *data) {
     return 0;
 }
 */
-void EchoServer::ReadCompleteCall(TcpConnection &conn, Buffer &buff) {
+void EchoServer::ReadCompleteCall(const TcpConnectionPtr &conn, Buffer *buff) {
+    LOG_DEBUG<<"read complete call start"<<endl;
     char tmp[1024] = {0};
-    int len = buff.GetData(tmp, 1024);
-    LOG_DEBUG<<"echo read: "<<tmp<<endl;
-    send(conn.GetFd(), tmp, len, 0);
-
+    int len = buff->GetData(tmp, 1024);
+    LOG_DEBUG<<"echo read: "<<tmp <<"len is "<<len<<endl;
+    send(conn->GetFd(), tmp, len, 0);
     return;
 }
 
-void EchoServer::WriteCompleteCall(TcpConnection &conn, Buffer &buff) {
+void EchoServer::WriteCompleteCall(const TcpConnectionPtr& conn, Buffer *buff) {
     return;
 }
 

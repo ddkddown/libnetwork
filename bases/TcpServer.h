@@ -30,4 +30,7 @@ private:
     WriteCompleteCallBk writeHandler_;
     Acceptor accpt_;
     ThreadPool pool_;
+
+    //TODO delete conn的接口
+    vector<TcpConnectionPtr> conns_;
 };

@@ -51,6 +51,9 @@ int EventDispatch::DeleteChannel(Channel &c) {
         return -1;
     }
 
+    shutdown(c.GetFd(), SHUT_RDWR);
+    close(c.GetFd());
+
     return 0;
 }
 

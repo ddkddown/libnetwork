@@ -32,8 +32,9 @@ int TcpServer::HandleAcceptor(void *data) {
     }
 
     EventLoop &loop = pool_.GetLoop();
-    TcpConnection conn(clienFd, EPOLLIN|EPOLLET, &loop, readHandler_, writeHandler_);
-
+    TcpConnectionPtr conn(new TcpConnection(clienFd, EPOLLIN|EPOLLET,
+                        &loop, readHandler_, writeHandler_));
+    conns_.push_back(conn);
     LOG_DEBUG<<"accept fd"<<clienFd <<endl;
     return clienFd;
 }

@@ -1,18 +1,20 @@
 #pragma once
 #include <functional>
+#include <memory>
 #include "EventLoop.h"
 #include "Buffer.h"
 
 class TcpConnection;
 
-using ReadCompleteCallBk = function<void(TcpConnection&, Buffer&)>;
-using WriteCompleteCallBk = function<void(TcpConnection&, Buffer&)>;
-
-class TcpConnection {
+using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
+using ReadCompleteCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
+using WriteCompleteCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
+class TcpConnection : public enable_shared_from_this<TcpConnection>{
 public:
     TcpConnection(int fd, int event, EventLoop *loop,
                 ReadCompleteCallBk read = nullptr,
                 WriteCompleteCallBk write = nullptr);
+
     virtual ~TcpConnection();
 
     int HandleInput(void *data);
