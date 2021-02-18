@@ -23,10 +23,6 @@ int TcpConnection::HandleInput(void *data) {
         return -1;
     }
 
-    LOG_DEBUG<<"prepare to do readHanler"<<endl;
-    if(nullptr == this) {
-        LOG_DEBUG<<"this is null"<<endl;
-    }
     if(readHandler_) readHandler_(shared_from_this(), &inputBuffer_);
     return ret;
 }

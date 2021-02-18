@@ -30,10 +30,8 @@ int EchoServer::ReadHandler(int fd, void *data) {
 }
 */
 void EchoServer::ReadCompleteCall(const TcpConnectionPtr &conn, Buffer *buff) {
-    LOG_DEBUG<<"read complete call start"<<endl;
     char tmp[1024] = {0};
     int len = buff->GetData(tmp, 1024);
-    LOG_DEBUG<<"echo read: "<<tmp <<"len is "<<len<<endl;
     send(conn->GetFd(), tmp, len, 0);
     return;
 }

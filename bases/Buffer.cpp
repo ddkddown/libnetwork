@@ -2,21 +2,15 @@
 #include <string.h>
 #include <sys/socket.h>
 #include "Buffer.h"
-Buffer::Buffer():buff_(INITIAL_SIZE) {}
+#include "Logger.h"
+Buffer::Buffer():buff_(INITIAL_SIZE), writeIndex_(0) {}
 
 Buffer::~Buffer(){}
 
 int Buffer::ReadFromFd(int fd) {
-    char tmp[65536] = {0};
-    int n = recv(fd, tmp, 65536, 0);
-    if(n > 0) {
-        if((buff_.capacity() - buff_.size()) < n) {
-            buff_.resize(buff_.size() + n);
-        }
-
-        memcpy(&*(buff_.begin()+buff_.size()), tmp, n);
-    }
-
+    CheckFreeSpace();
+    int n = recv(fd, BeginWrite(), FreeSpace(), 0);
+    writeIndex_ += n;
     return n;
 }
 
@@ -25,24 +19,22 @@ void Buffer::SendToFd(int fd) {
         return;
     }
 
-    send(fd, &*buff_.begin(), buff_.size(), 0);
+    int n = send(fd, Begin(), writeIndex_, 0);
+    writeIndex_ -= n;
 }
 
 void Buffer::AppenData(const char *data, int len) {
-    if((buff_.capacity() - buff_.size()) < len) {
-        buff_.resize(buff_.size() + len);
-    }
-
-    memcpy(&*(buff_.begin()+buff_.size()), data, len);
+    CheckFreeSpace(len);
+    memcpy(BeginWrite(), data, len);
 }
 
 int Buffer::GetData(char *dst, int len) {
-    if(len > buff_.size()) {
-        len = buff_.size();
+    if(len > writeIndex_) {
+        len = writeIndex_;
     }
 
-    memcpy(dst, &*buff_.begin(), len);
-    buff_.erase(buff_.begin(), buff_.begin()+len);
+    memcpy(dst, Begin(), len);
+    writeIndex_ -= len;
     
     return len;
 }
