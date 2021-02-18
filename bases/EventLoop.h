@@ -20,10 +20,6 @@ public:
     void Run();
     int Quit();
 private:
-    void EventActive(int fd, int event);
-    void HandlePendingChannel();
-    int NotifyQuit(void *data);
-private:
     enum {
         ADD = 0,
         UPDATE,
@@ -32,10 +28,38 @@ private:
     };
 
     struct queueNode{
-        Channel c;
-        int type;
-        int event;
+        Channel c_;
+        int type_;
+        int event_;
+        queueNode(Channel c, int type,
+                    int event):c_(c),type_(type),
+                    event_(event){}
+
+        queueNode(const queueNode& n):c_(n.c_),
+                                    type_(n.type_),
+                                    event_(n.event_) {}
+
+        queueNode& operator=(const queueNode& n) {
+            if(this == &n) {
+                return *this;
+            }
+
+            c_ = n.c_;
+            type_ = n.type_;
+            event_ = n.event_;
+            return *this;
+        }
     };
+private:
+    void EventActive(int fd, int event);
+    void HandlePendingChannel();
+    int NotifyQuit(void *data);
+    void PushNode(const queueNode &tmp) {
+        lock_guard<mutex> lk(m_);
+        pendingQueue_.push(tmp);
+    }
+
+private:
 
     bool quit_;
     int isHandlePending_;
@@ -44,6 +68,6 @@ private:
     queue<queueNode> pendingQueue_;
     map<int, Channel> channMap_;
     EventDispatch dispatcher_;
-
+    mutex m_;//TODO shared?
     friend class EventDispatch;
 };

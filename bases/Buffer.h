@@ -8,7 +8,7 @@ using namespace std;
 class Buffer {
 enum {
     MIN_SIZE = 1024,
-    INITIAL_SIZE = 65536
+    INITIAL_SIZE = 4096
 };
 public:
     Buffer();

@@ -35,7 +35,6 @@ int TcpServer::HandleAcceptor(void *data) {
     TcpConnectionPtr conn(new TcpConnection(clienFd, EPOLLIN|EPOLLET,
                         &loop, readHandler_, writeHandler_));
     conns_.push_back(conn);
-    LOG_DEBUG<<"accept fd"<<clienFd <<endl;
     return clienFd;
 }
 

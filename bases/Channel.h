@@ -23,16 +23,19 @@ public:
         data_ = c.data_;
         readCall_ = c.readCall_;
         writeCall_ = c.writeCall_;
-
     }
 
-    Channel& operator = (const Channel &c) {
+    Channel& operator=(const Channel &c) {
+        if(&c == this){
+            return *this;
+        }
+
         fd_ = c.fd_;
         event_ = c.event_;
         readCall_ = c.readCall_;
         writeCall_ = c.writeCall_;
         data_ = c.data_;
-        
+        return *this;
     }
 
     ~Channel() {

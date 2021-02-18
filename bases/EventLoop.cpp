@@ -3,10 +3,6 @@
 #include "EventLoop.h"
 #include "Logger.h"
 
-static bool CheckFileAvaliable(int fd) {
-    return !(-1 == fcntl(fd, F_GETFD, NULL) && errno == EBADF);
-}
-
 EventLoop::EventLoop():dispatcher_(this),quit_(false){
     if(-1 == pipe(fds_)) {
         LOG_ERR<<"create pipe failed!";
@@ -44,7 +40,7 @@ void EventLoop::AddChannel(Channel &c) {
     char a = 'a';
     write(fds_[1], &a, 1);
     queueNode tmp = {c, ADD, 0};
-    pendingQueue_.push(tmp);
+    PushNode(tmp);
 }
 
 void EventLoop::AddAcceptor(Channel &c) {
@@ -54,12 +50,12 @@ void EventLoop::AddAcceptor(Channel &c) {
 
 void EventLoop::DelChannel(Channel &c) {
     queueNode tmp = {c, DELETE, 0};
-    pendingQueue_.push(tmp);
+    PushNode(tmp);
 }
 
 void EventLoop::UpdateChannel(Channel &c) {
     queueNode tmp = {c, UPDATE, 0};
-    pendingQueue_.push(tmp);
+    PushNode(tmp);
 }
 
 void EventLoop::EventActive(int fd, int event) {
@@ -70,10 +66,12 @@ void EventLoop::EventActive(int fd, int event) {
     }
 
     queueNode tmp = {c->second, ACTIVE, event};
-    pendingQueue_.push(tmp);
+    PushNode(tmp);
 }
 
 void EventLoop::Run() {
+    LOG_DEBUG<<"eventLoop addr: "<<this<<" thread id"<<this_thread::get_id()<<endl;
+
     while(!quit_) {
         dispatcher_.Dispatch();
         HandlePendingChannel();
@@ -82,40 +80,37 @@ void EventLoop::Run() {
 
 void EventLoop::HandlePendingChannel() {
     while(!pendingQueue_.empty()) {
-        auto node = pendingQueue_.front();
+        LOG_DEBUG<<"pendingQueue_ size"<<pendingQueue_.size()<<endl;
+        auto tmp = pendingQueue_.front();
+        auto node = tmp;
         pendingQueue_.pop();
 
-        LOG_DEBUG<<"node fd" <<node.c.GetFd()<<endl;
+        LOG_DEBUG<<"node fd" <<node.c_.GetFd()<<endl;
         //TODO 状态机修改
-        switch (node.type)
+        switch (node.type_)
         {
         case ACTIVE:
-            if(node.event & EPOLLIN) {
-                node.c.GetReadCall()(nullptr);
+            if(node.event_ & EPOLLIN) {
+                node.c_.GetReadCall()(nullptr);
             }
 
-            if(node.event & EPOLLOUT) {
-                node.c.GetWriteCall()(nullptr);
-            }
-
-            if(!CheckFileAvaliable(node.c.GetFd())) {
-                queueNode tmp = {node.c, DELETE, 0};
-                pendingQueue_.push(tmp);
+            if(node.event_ & EPOLLOUT) {
+                node.c_.GetWriteCall()(nullptr);
             }
             break;
         case ADD:
-            channMap_.insert(pair<int, Channel>(node.c.GetFd(), node.c));
-            dispatcher_.AddChannel(node.c);
+            channMap_.insert(pair<int, Channel>(node.c_.GetFd(), node.c_));
+            dispatcher_.AddChannel(node.c_);
             break;
         case UPDATE:
-            dispatcher_.UpdateChannel(node.c);
+            dispatcher_.UpdateChannel(node.c_);
             break;
         case DELETE:
-            channMap_.erase(channMap_.find(node.c.GetFd()));
-            dispatcher_.DeleteChannel(node.c);
+            channMap_.erase(channMap_.find(node.c_.GetFd()));
+            dispatcher_.DeleteChannel(node.c_);
             break;
         default:
-            LOG_INFO<<"unknown type: "<<node.type;
+            LOG_INFO<<"unknown type: "<<node.type_;
             break;
         }
     }

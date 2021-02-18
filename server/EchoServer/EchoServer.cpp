@@ -54,6 +54,6 @@ EchoServer::~EchoServer() {
 
 int main() {
     Logger::InitLog("./echo.log");
-    EchoServer echo(9677, 2);
+    EchoServer echo(9677, 10);
     echo.Start();
 }

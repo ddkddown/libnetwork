@@ -2,7 +2,8 @@
 #include "LoopThread.h"
 #include "Logger.h"
 
-LoopThread::LoopThread():t_(nullptr) {}
+LoopThread::LoopThread():t_(nullptr) {
+}
 
 LoopThread::~LoopThread() {
     loop_.Quit();
