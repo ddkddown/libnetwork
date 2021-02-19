@@ -1,25 +1,28 @@
 #pragma once
 #include <iostream>
+#include <vector>
+#include <map>
 #include "Channel.h"
 using namespace std;
 
 class EventDispatch {
+using ChanneList = vector<Channel*>;
+using EventList = vector<struct epoll_event>;
+using ChannelMap = map<int, Channel*>;
+
 public:
     EventDispatch(void *loop);
     ~EventDispatch();
-    int AddChannel(Channel &c);
-    int DeleteChannel(Channel &c);
-    int UpdateChannel(Channel &c);
-    void Dispatch();
-    void Clear();
+    void DeleteChannel(Channel *c);
+    void UpdateChannel(Channel *c);
+    void Dispatch(ChanneList *activeChannels);
 private:
+    void Update(int op, Channel *channel);
     enum {
-        MAX_EVENT = 1024
+        InitEventSize = 16
     };
-
-    int eventCount_;
-    int fds_;
     int efd_;
+    EventList events_;
+    ChannelMap channels_;
     void *loop_;
-    struct epoll_event *events_;
 };

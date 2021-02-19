@@ -1,38 +1,88 @@
 #include <string.h>
 #include "TcpConnection.h"
-TcpConnection::TcpConnection(int fd, int event, EventLoop *loop,
-                            ReadCompleteCallBk read,
-                            WriteCompleteCallBk write):fd_(fd), event_(event),
-                            loop_(loop), c_(fd_, event_, bind(&TcpConnection::HandleInput, this, placeholders::_1),
-                            bind(&TcpConnection::HandleOutput, this, placeholders::_1), loop_),
-                            readHandler_(read), writeHandler_(write) {
-    loop_->AddChannel(c_);
+TcpConnection::TcpConnection(EventLoop *loop, int sockfd)
+                :loop_(loop), fd_(sockfd), state_(CONNECTING),
+                channel_(new Channel(loop, sockfd)) {
+    channel_->SetReadCallbk(bind(&TcpConnection::HandleRead, this));
+    channel_->SetWriteCallbk(bind(&TcpConnection::HandleWrite, this));
+    channel_->SetCloseCallbk(bind(&TcpConnection::HandleClose, this));
+    channel_->SetErrorCallbk(bind(&TcpConnection::HandleError, this));
 }
 
 TcpConnection::~TcpConnection() {
 }
 
-int TcpConnection::HandleInput(void *data) {
+void TcpConnection::Send(Buffer *buff) {
+    if(CONNECTED == state_) {
+        loop_->RunInLoop(bind(&TcpConnection::SendInLoop, 
+                this, buff->GetDataAString()));
+    }
+}
+
+void TcpConnection::ShutDown() {
+    if(CONNECTED == state_) {
+        SetState(DISCONNECTING);
+        loop_-RunInLoop(bind(&TcpConnection::ShutdownInLoop, this));
+    }
+}
+
+void TcpConnection::SendInLoop(const string &data) {
+
+}
+
+void TcpConnection::ShutdownInLoop() {
+    if(!channel_->IsWriting()) {
+        shutdown(fd_, SHUT_WR);
+    }
+}
+
+void TcpConnection::ConnectEstablished() {
+    assert(CONNECTING == state_);
+    SetState(CONNECTED);
+    channel_->Tie(shared_from_this());
+    channel_->EnableRead();
+
+    connectionCallBk_(shared_from_this());
+}
+
+void TcpConnection::ConnectDestroyed() {
+    assert(CONNECTED == state_);
+    SetState(DISCONNECTED);
+    channel_->DisableAll();
+    closeCallBk_(shared_from_this());
+    loop_->RemoveChannel(channel_.get());
+}
+
+
+
+
+
+void TcpConnection::HandleRead() {
     int ret = inputBuffer_.ReadFromFd(fd_);
     if(0 == ret) {
-        loop_->DelChannel(c_);
-        //TODO 调用tcpserver清除此conn
+        HandleClose();
     }
-
-    if(-1 == ret && errno == EAGAIN) {
-        return -1;
+    else if (0 < ret) {
+        messageCallBk_(shared_from_this(), &inputBuffer_);
     }
-
-    if(readHandler_) readHandler_(shared_from_this(), &inputBuffer_);
-    return ret;
+    else {
+        LOG_WARN<<"ret: "<<ret<<"errno: "<<strerror(errno);
+    }
 }
 
-int TcpConnection::HandleOutput(void *data) {
+void TcpConnection::HandleWrite() {
     outputBuffer_.SendToFd(fd_);
-    if(writeHandler_) writeHandler_(shared_from_this(), &outputBuffer_);
-    return 0;
+    if(writeCallBk_) writeCallBk_(shared_from_this());
 }
 
-void TcpConnection::SendData(const char *data, int len) {
-    outputBuffer_.AppenData(data, len);
+void TcpConnection::HandleClose() {
+    SetState(DISCONNECTED);
+    channel_->DisableAll();
+    closeCallBk_(shared_from_this());
+    loop_->RemoveChannel(channel_.get());
+    close(fd_);
+}
+
+void TcpConnection::HandleError() {
+    LOG_WARN<<"get socket: "<<fd_<<" error"<<endl;
 }

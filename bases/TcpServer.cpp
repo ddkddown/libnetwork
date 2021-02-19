@@ -3,7 +3,16 @@
 #include "TcpServer.h"
 #include "Logger.h"
 
-TcpServer::IgnoreSig TcpServer::initSig_;
+class IgnoreSigPipe
+{
+ public:
+  IgnoreSigPipe()
+  {
+    ::signal(SIGPIPE, SIG_IGN);
+  }
+};
+
+IgnoreSigPipe initObj;
 
 TcpServer::TcpServer(int port, int poolSize):
                     accpt_(port), pool_(poolSize),

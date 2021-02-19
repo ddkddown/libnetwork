@@ -19,13 +19,6 @@ protected:
 private:
     int HandleAcceptor(void *data);
 private:
-    class IgnoreSig {
-    public:
-        IgnoreSig() {
-            ::signal(SIGPIPE, SIG_IGN);
-        }        
-    };
-    static IgnoreSig initSig_;
     ReadCompleteCallBk readHandler_;
     WriteCompleteCallBk writeHandler_;
     Acceptor accpt_;

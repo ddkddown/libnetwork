@@ -28,6 +28,8 @@ public:
     void SendToFd(int fd);
     void AppenData(const char *data, int len);
     int GetData(char *dst, int len);
+    string GetDataAString();
+    void Clear();
 private:
     void CheckFreeSpace(int len = MIN_SIZE) {
         if(FreeSpace() < len) {

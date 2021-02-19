@@ -4,83 +4,68 @@
 #include "Logger.h"
 
 EventDispatch::EventDispatch(void* loop):
-                eventCount_(0),fds_(0),
-                efd_(0),events_(nullptr),
+                events_(InitEventSize),
+                efd_(0),
                 loop_(loop) {
     efd_ = epoll_create(1);
     if(-1 == efd_) {
         LOG_ERR<<"create epoll failed!"<<strerror(errno) ;
     }
-
-    try {
-        events_ = new epoll_event[MAX_EVENT];
-    } catch(...) {
-        LOG_ERR<<"alloc epoll event failed!";
-    }
 }
 
 EventDispatch::~EventDispatch() {
-    Clear();
-}
-
-int EventDispatch::AddChannel(Channel &c) {
-    struct epoll_event event;
-    event.data.fd = c.GetFd();
-    event.events = c.GetEvent();
-    
-    if(-1 == epoll_ctl(efd_, EPOLL_CTL_ADD, c.GetFd(), &event)) {
-        LOG_ERR<<"error while epoll add fd"<<strerror(errno)<<efd_<<c.GetFd();
-        return -1;
-    }
-    else {
-        LOG_DEBUG<<"add fd succ";
-    }
-
-    return 0;
-}
-
-int EventDispatch::DeleteChannel(Channel &c) {
-    struct epoll_event event;
-    event.data.fd = c.GetFd();
-    event.events = 0;
-    
-    if(-1 == epoll_ctl(efd_, EPOLL_CTL_DEL, c.GetFd(), &event)) {
-        LOG_ERR<<"error while epoll delete fd";
-        return -1;
-    }
-
-    shutdown(c.GetFd(), SHUT_RDWR);
-    close(c.GetFd());
-
-    return 0;
-}
-
-int EventDispatch::UpdateChannel(Channel &c) {
-    struct epoll_event event;
-    event.data.fd = c.GetFd();
-    event.events = c.GetEvent();
-    
-    if(-1 == epoll_ctl(efd_, EPOLL_CTL_MOD, c.GetFd(), &event)) {
-        LOG_ERR<<"error while epoll update fd";
-        return -1;
-    }
-
-    return 0;
-}
-
-void EventDispatch::Dispatch() {
-    auto num = epoll_wait(efd_, events_, MAX_EVENT, -1);
-    EventLoop *loop = static_cast<EventLoop*>(loop_);
-    for(int i = 0; i < num; ++i) {
-        loop->EventActive(events_[i].data.fd, events_[i].events);
-    }
-
-    return;
-}
-
-void EventDispatch::Clear() {
-    if(nullptr != events_) {
-        delete [] events_;
-    }
     close(efd_);
+}
+
+void EventDispatch::DeleteChannel(Channel *c) {
+    int fd = c->GetFd();
+    auto n = channels_.erase(fd));
+    if(1 != n) {
+        LOG_ERR<<"channel erase error, n:"<<n<<endl;
+    }
+    Update(EPOLL_CTL_DEL, c);
+
+}
+
+void EventDispatch::UpdateChannel(Channel *c) {
+    if(c->GetIndex() < 0) {
+        //添加
+        c->SetIndex(1);
+        channels_[c->GetFd()] = c;
+        Update(EPOLL_CTL_ADD, c);
+    } else {
+        Update(EPOLL_CTL_MOD, c);
+    }
+}
+
+void EventDispatch::Dispatch(ChanneList *activeChannels) {
+    auto num = epoll_wait(efd_, &*events_.begin(),
+                static_cast<int>(events_.size()), -1);
+    if(num <= 0) {
+        LOG_INFO<<"num: "<<num<<" <= 0"<<endl;
+        return;
+    }
+
+    for(int i = 0; i < num; ++i) {
+        Channel *channel = static_cast<Channel*>(events_[i].data.ptr);
+        int fd = channel->GetFd();
+        ChannelMap::const_iterator it = channels_.find(fd);
+        assert(it != channels_.end());
+        channel->SetREvent(events_[i].events);
+        activeChannels->push_back(channel);
+    }
+
+    if(static_cast<size_t>(num) == events_.size()) {
+        events_.resize(events_.size()*2);
+    }
+}
+
+void EventDispatch::Update(int op, Channel *channel) {
+    struct epoll_event event;
+    bzero(&event, sizeof event);
+    event.events = channel->GetEvent();
+    event.data.ptr = channel;
+    if(0 > epoll_ctl(efd_, op, channel->GetFd(), &event)) {
+        LOG_ERR<<"epoll_ctl op "<<op<<" failed!"<<endl;
+    }
 }

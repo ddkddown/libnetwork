@@ -38,3 +38,13 @@ int Buffer::GetData(char *dst, int len) {
     
     return len;
 }
+
+string Buffer::GetDataAString() {
+    string tmp(Begin(), writeIndex_);
+    writeIndex_ = 0;
+    return tmp;
+}
+void Buffer::Clear() {
+    buff_.clear();
+    writeIndex_ = 0;
+}

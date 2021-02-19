@@ -1,39 +1,89 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <boost/scoped_ptr.hpp>
 #include "EventLoop.h"
 #include "Buffer.h"
+#include "Channel.h"
 
 class TcpConnection;
 
-using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
-using ReadCompleteCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
-using WriteCompleteCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
-class TcpConnection : public enable_shared_from_this<TcpConnection>{
+using TcpConnectionPtr = shared_ptr<TcpConnection>;
+using ConnetionCallBk = function<void(const TcpConnectionPtr&)>;
+using CloseCallBk = function<void(const TcpConnectionPtr&)>;
+using WriteCompleteBk = function<void(const TcpConnectionPtr&)>;
+using MessageCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
+
+void DefaultConnectionCallBk(const TcpConnectionPtr &conn) {}
+
+void DefaultMessageCallBk(const TcpConnectionPtr &conn, Buffer *buff) {
+    buff->Clear();
+}
+
+class TcpConnection : public enable_shared_from_this<TcpConnection>,
+                    boost::noncopyable {
 public:
-    TcpConnection(int fd, int event, EventLoop *loop,
-                ReadCompleteCallBk read = nullptr,
-                WriteCompleteCallBk write = nullptr);
+    TcpConnection(EventLoop *loop, int sockfd);
 
     virtual ~TcpConnection();
 
-    int HandleInput(void *data);
+    EventLoop* GetLoop() {
+        return loop_;
+    }
 
-    int HandleOutput(void *data);
+    bool Connected() {
+        return state_ == CONNECTED;
+    }
 
-    void SendData(const char *data, int len);
+    void Send(Buffer *message);
 
-    inline int GetFd() {
-        return fd_;
+    void ShutDown();
+
+    inline void SetConnectionCallBk(const ConnetionCallBk &cb) {
+        connectionCallBk_ = cb;
+    } 
+
+    inline void SetMessageCallBk(const MessageCallBk &cb) {
+        messageCallBk_ = cb;
+    }
+
+    inline void SetWriteCompleteCallBk(const WriteCompleteBk &cb) {
+        writeCallBk_ = cb;
+    }
+
+    inline void SetCloseCallBk(const CloseCallBk &cb) {
+        closeCallBk_ = cb;
+    }
+
+    void ConnectEstablished(); //创建连接时调用
+    void ConnectDestroyed(); //移除连接时调用
+
+private:
+    enum States {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED,
+        DISCONNECTING
+    };
+    void HandleRead();
+    void HandleWrite();
+    void HandleClose();
+    void HandleError();
+    void SendInLoop(const string &data);
+    void ShutdownInLoop();
+    void SetState(States s) {
+        state_ = s;
     }
 
 private:
     int fd_;
-    int event_;
+    shared_ptr<Channel> channel_;
+    EventLoop *loop_;
+    States state_;
+    ConnetionCallBk connectionCallBk_;
+    MessageCallBk messageCallBk_;
+    WriteCompleteBk writeCallBk_;
+    ConnetionCallBk closeCallBk_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
-    ReadCompleteCallBk readHandler_;
-    WriteCompleteCallBk writeHandler_;
-    EventLoop *loop_;
-    Channel c_;
 };

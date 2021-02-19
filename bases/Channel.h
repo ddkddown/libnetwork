@@ -4,48 +4,41 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <boost/noncopyable.hpp>
 #include "Logger.h"
 
+class EventLoop;
+
 using namespace std;
-using EventReadCallback = function<int(void*)>;
-using EventWriteCallback = function<int(void*)>;
+using EventCallback = function<void()>;
+using ReadCallback = function<void()>;
 
-class Channel {
+class Channel : boost::noncopyable {
 public:
-    Channel(int fd, int event, EventReadCallback readCall = nullptr,
-                EventWriteCallback writeCall = nullptr, void *data = nullptr):
-                fd_(fd), event_(event), readCall_(move(readCall)),
-                writeCall_(move(writeCall)), data_(data) {}
-    
-    Channel(const Channel& c) {
-        fd_ = c.fd_;
-        event_ = c.event_;
-        data_ = c.data_;
-        readCall_ = c.readCall_;
-        writeCall_ = c.writeCall_;
+    enum EVENT {
+        NONE = 0,
+        READ = EPOLLIN | EPOLLPRI, //EPOLLPRI 带外数据
+        WRITE = EPOLLOUT
+    };
+
+    Channel(EventLoop *loop, int fd);
+    ~Channel();
+
+    void HandleEvent();
+    inline void SetReadCallbk(const ReadCallback &cb) {
+        readCall_ = cb;
+    }
+    inline void SetWriteCallbk(const EventCallback &cb) {
+        writeCall_ = cb;
+    }
+    inline void SetCloseCallbk(const EventCallback &cb) {
+        closeCall_ = cb;
+    }
+    inline void SetErrorCallbk(const EventCallback &cb) {
+        errorCall_ = cb;
     }
 
-    Channel& operator=(const Channel &c) {
-        if(&c == this){
-            return *this;
-        }
-
-        fd_ = c.fd_;
-        event_ = c.event_;
-        readCall_ = c.readCall_;
-        writeCall_ = c.writeCall_;
-        data_ = c.data_;
-        return *this;
-    }
-
-    ~Channel() {
-    }
-
-    bool CheckEventEnable(int event);
-
-    void UpdateEvent(int event);
-    
-    void DisableEvent(int event);
+    void Tie(const shared_ptr<void>&);
 
     int GetFd() {
         return fd_;
@@ -55,22 +48,59 @@ public:
         return event_;
     }
 
-    const EventReadCallback GetReadCall() {
-        return readCall_;
+    void EnableRead() {
+        event_ |= READ;
+        Update();
     }
 
-    const EventWriteCallback GetWriteCall() {
-        return writeCall_;
+    void EnableWrite() {
+        event_ |= WRITE;
+        Update();
     }
 
-    void setReadCall(EventReadCallback cb)
-    { readCall_ = std::move(cb); }
-    void setWriteCallback(EventWriteCallback cb)
-    { writeCall_ = std::move(cb); }
+    void DisableAll() {
+        event_ = NONE;
+        Update();
+    }
+    bool IsWriting() {
+        return event_ & WRITE;
+    }
+    void SetEvent(int event) {
+        event_ = event;
+        Update();
+    }
+
+    inline void SetREvent(int revent) {
+        revents_ = revent;
+    }
+
+    int GetIndex() {
+        return index_;
+    }
+
+    void SetIndex(int idx) {
+        index_ = idx;
+    }
+
+    EventLoop* GetLoop() {
+        return loop_;
+    }
+    
 private:
-    int fd_;
-    int event_;
-    EventReadCallback readCall_;
-    EventWriteCallback writeCall_;
-    void *data_;
+    void Update();
+    void CheckHandleEvent();
+private:
+    EventLoop *loop_;
+    const int fd_;
+    int event_; //用户设置
+    int revents_; //epoll返回
+    int index_;
+
+    weak_ptr<void> tie_; //用于保证owner对象存在, 使用weak_ptr不增加引用
+    bool tied_;
+    bool eventHandling_;
+    ReadCallback readCall_;
+    EventCallback writeCall_;
+    EventCallback closeCall_;
+    EventCallback errorCall_;
 };

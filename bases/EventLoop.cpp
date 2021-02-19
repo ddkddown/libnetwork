@@ -1,117 +1,101 @@
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/eventfd.h>
 #include "EventLoop.h"
 #include "Logger.h"
 
-EventLoop::EventLoop():dispatcher_(this),quit_(false){
-    if(-1 == pipe(fds_)) {
-        LOG_ERR<<"create pipe failed!";
+static int CreateWakeFd() {
+    int wakeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if(wakeFd < 0) {
+        LOG_ERR<<"create eventFd failed!";
+        abort();
     }
 
-    Channel c(fds_[0], EPOLLIN, bind(&EventLoop::NotifyQuit, this, 
-            std::placeholders::_1), nullptr, nullptr);
-    channMap_.insert(pair<int, Channel>(fds_[0], c));
-    dispatcher_.AddChannel(c);
+    return wakeFd;
+}
+
+EventLoop::EventLoop()
+        : looping_(false),
+          quit_(false),
+          eventHandling_(false),
+          callingPendingFunctors_(false),
+          dispatcher_(this),
+          wakeFd_(CreateWakeFd()),
+          wakeupChannel_(new Channel(this, wakeFd_)) {
+    
+    wakeupChannel_->SetReadCallbk(bind(&EventLoop::HandleWakeUp, this));
+    wakeupChannel_->EnableRead();
 }
 
 EventLoop::~EventLoop() {
-    for(auto i : channMap_) {
-        close(i.first);
-    }
-
-    close(fds_[0]);
-    close(fds_[1]);
+    close(wakeFd_);
 }
+
+void EventLoop::Loop() {
+    assert(!looping_);
+    looping_ = true;
+    while(!quit_) {
+        activeChannles_.clear();
+        dispatcher_.Dispatch(&activeChannles_);
+        eventHandling_ = true;
+        for(auto i : activeChannles_) {
+            i->HandleEvent();
+        }
+        eventHandling_ = false;
+        DoPendingFunctors();
+    }
+    looping_ = false;
+}
+
 
 int EventLoop::Quit() {
-    char a = 'q';
-    write(fds_[1], &a, 1);
+    quit_ = true;
+    wakeup();
 }
 
-int EventLoop::NotifyQuit(void *data) {
-    char c;
-    read(fds_[0], &c, 1);
-    if('q' == c) {
-        quit_ = true;
-    }
+void EventLoop::wakeup() {
+    char one = 1;
+    write(wakeFd_, &one, sizeof one);
 }
 
-void EventLoop::AddChannel(Channel &c) {
-    char a = 'a';
-    write(fds_[1], &a, 1);
-    queueNode tmp = {c, ADD, 0};
-    PushNode(tmp);
+void EventLoop::RunInLoop(const Functor &cb) {
+    cb();
 }
 
-void EventLoop::AddAcceptor(Channel &c) {
-    channMap_.insert(pair<int, Channel>(c.GetFd(), c));
-    dispatcher_.AddChannel(c);
-}
-
-void EventLoop::DelChannel(Channel &c) {
-    queueNode tmp = {c, DELETE, 0};
-    PushNode(tmp);
-}
-
-void EventLoop::UpdateChannel(Channel &c) {
-    queueNode tmp = {c, UPDATE, 0};
-    PushNode(tmp);
-}
-
-void EventLoop::EventActive(int fd, int event) {
-    auto c = channMap_.find(fd);
-    if(channMap_.end() == c) {
-        LOG_WARN<<"map not contain fd:"<<fd;
-        return;
+void EventLoop::QueueInLoop(const Functor &cb) {
+    {
+        lock_guard<mutex> lk(m_);
+        pendingFunctors_.push_back(cb);
     }
 
-    queueNode tmp = {c->second, ACTIVE, event};
-    PushNode(tmp);
+    wakeup();
 }
 
-void EventLoop::Run() {
-    LOG_DEBUG<<"eventLoop addr: "<<this<<" thread id"<<this_thread::get_id()<<endl;
-
-    while(!quit_) {
-        dispatcher_.Dispatch();
-        HandlePendingChannel();
-    }
+void EventLoop::UpdateChannel(Channel *c) {
+    dispatcher_.UpdateChannel(c);
 }
 
-void EventLoop::HandlePendingChannel() {
-    while(!pendingQueue_.empty()) {
-        LOG_DEBUG<<"pendingQueue_ size"<<pendingQueue_.size()<<endl;
-        auto tmp = pendingQueue_.front();
-        auto node = tmp;
-        pendingQueue_.pop();
+void EventLoop::RemoveChannel(Channel *c) {
+    dispatcher_.DeleteChannel(c);
+}
 
-        LOG_DEBUG<<"node fd" <<node.c_.GetFd()<<endl;
-        //TODO 状态机修改
-        switch (node.type_)
-        {
-        case ACTIVE:
-            if(node.event_ & EPOLLIN) {
-                node.c_.GetReadCall()(nullptr);
-            }
+void EventLoop::HandleWakeUp() {
+    char one = 1;
+    read(wakeFd_, &one, sizeof one);
+}
 
-            if(node.event_ & EPOLLOUT) {
-                node.c_.GetWriteCall()(nullptr);
-            }
-            break;
-        case ADD:
-            channMap_.insert(pair<int, Channel>(node.c_.GetFd(), node.c_));
-            dispatcher_.AddChannel(node.c_);
-            break;
-        case UPDATE:
-            dispatcher_.UpdateChannel(node.c_);
-            break;
-        case DELETE:
-            channMap_.erase(channMap_.find(node.c_.GetFd()));
-            dispatcher_.DeleteChannel(node.c_);
-            break;
-        default:
-            LOG_INFO<<"unknown type: "<<node.type_;
-            break;
-        }
+void EventLoop::DoPendingFunctors() {
+    vector<Functor> functors;
+    callingPendingFunctors_ = true;
+    {
+        //func可能执行时间长, 减小锁粒度
+        lock_guard<mutex> lk(m_);
+        functors.swap(pendingFunctors_);
     }
+
+    for(auto i : functors) {
+        i();
+    }
+
+    callingPendingFunctors_ = false;
 }
