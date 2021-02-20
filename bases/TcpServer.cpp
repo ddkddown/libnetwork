@@ -14,46 +14,41 @@ class IgnoreSigPipe
 
 IgnoreSigPipe initObj;
 
-TcpServer::TcpServer(int port, int poolSize):
-                    accpt_(port), pool_(poolSize),
-                    readHandler_(nullptr), writeHandler_(nullptr) {
-    LOG_DEBUG<<"accpt_ fd"<<accpt_.GetFd();
-    Channel c(accpt_.GetFd(), EPOLLIN, 
-            bind(&TcpServer::HandleAcceptor,
-            this,std::placeholders::_1),
-            nullptr, &pool_.GetMainLoop());
-    pool_.GetMainLoop().AddAcceptor(c);
+TcpServer::TcpServer(int port, int poolSize, const ConnetionCallBk &cn,
+            const MessageCallBk &ms, const WriteCompleteBk &wr):
+            accpt_(new Acceptor(port, &pool_.GetMainLoop())), pool_(poolSize), connectionCallBk_(cn),
+            messageCallBk_(ms), writeCompleteBk_(wr) {
+    accpt_->SetNewConnCallBk(bind(&TcpServer::NewConn, this, placeholders::_1));
 }
 
-TcpServer::~TcpServer() {}
+TcpServer::~TcpServer() {
+    for(auto i : connections_) {
+        auto conn = i.second;
+        i.second.reset();
+        conn->GetLoop()->RunInLoop(bind(&TcpConnection::ConnectDestroyed, conn));
+        conn.reset();
+    }
+}
 
 void TcpServer::Start() {
+    accpt_->Listen();
     pool_.Run();
 }
 
-int TcpServer::HandleAcceptor(void *data) {
-    struct sockaddr_in clienAddr;
-    socklen_t clienLen = sizeof(clienAddr);
-    int clienFd = accept(accpt_.GetFd(), (struct sockaddr*)&clienAddr, &clienLen);
-    if(-1 == clienFd) {
-        LOG_ERR<<"accept client failed!";
-        return -1;
-    }
-
+void TcpServer::NewConn(int sockFd) {
     EventLoop &loop = pool_.GetLoop();
-    TcpConnectionPtr conn(new TcpConnection(clienFd, EPOLLIN|EPOLLET,
-                        &loop, readHandler_, writeHandler_));
-    conns_.push_back(conn);
-    return clienFd;
+    TcpConnectionPtr conn(new TcpConnection(&loop, sockFd));
+    connections_[sockFd] = conn;
+    conn->SetConnectionCallBk(connectionCallBk_);
+    conn->SetWriteCompleteCallBk(writeCompleteBk_);
+    conn->SetMessageCallBk(messageCallBk_);
+    conn->SetCloseCallBk(bind(&TcpServer::RemoveConnection, this, _1));
+    pool_.GetMainLoop(boost::bind(&TcpConnection::ConnectEstablished, conn));
 }
 
-int TcpServer::GetAcceptFd() {
-    return accpt_.GetFd();
-}
-
-void TcpServer::SetReader(ReadCompleteCallBk read) {
-    readHandler_ = read;
-}
-void TcpServer::SetWriter(WriteCompleteCallBk write) {
-    writeHandler_ = write;
+void TcpServer::RemoveConnection(const TcpConnectionPtr& conn) {
+    auto n = connections_.erase(conn->GetFd());
+    assert(1 == n);
+    EventLoop &loop = pool_.GetLoop();
+    loop.QueueInLoop(bind(&TcpConnection::ConnectDestroyed, conn));
 }

@@ -9,6 +9,7 @@ public:
     EventLoop& GetLoop();
     void run();
 private:
+    void ThreadFunc();
     // loop_必须在t_调用前构造
     EventLoop loop_;
     shared_ptr<thread> t_;

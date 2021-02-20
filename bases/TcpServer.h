@@ -9,21 +9,33 @@
 
 class TcpServer {
 public:
-    TcpServer(int port, int poolSize);
+    TcpServer(int port, int poolSize, const ConnetionCallBk &cn,
+            const MessageCallBk &ms, const WriteCompleteBk &wr);
     virtual ~TcpServer();
     void Start();
-protected:
-    void SetReader(ReadCompleteCallBk read);
-    void SetWriter(WriteCompleteCallBk write);
-    int GetAcceptFd();
-private:
-    int HandleAcceptor(void *data);
-private:
-    ReadCompleteCallBk readHandler_;
-    WriteCompleteCallBk writeHandler_;
-    Acceptor accpt_;
-    ThreadPool pool_;
 
-    //TODO delete conn的接口
-    vector<TcpConnectionPtr> conns_;
+    inline void SetConnectionCallBk(const ConnetionCallBk &cb) {
+        connectionCallBk_ = cb;
+    }
+
+    inline void SetMessageCallBk(const MessageCallBk &cb) {
+        messageCallBk_ = cb;
+    }
+
+    inline void SetWriteCompleteCallBk(const WriteCompleteBk &cb) {
+        writeCompleteBk_ = cb;
+    }
+private:
+    void NewConn(int sockfd);
+    void RemoveConnection(const TcpConnectionPtr& conn);
+
+private:
+    using ConnectionMap = map<int, TcpConnectionPtr>;
+    ConnetionCallBk connectionCallBk_;
+    MessageCallBk messageCallBk_;
+    WriteCompleteBk writeCompleteBk_;
+    ThreadPool pool_;
+    shared_ptr<Acceptor> accpt_;
+    ConnectionMap connections_;
+    bool started_;
 };

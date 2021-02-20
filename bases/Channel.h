@@ -13,7 +13,8 @@ using namespace std;
 using EventCallback = function<void()>;
 using ReadCallback = function<void()>;
 
-class Channel : boost::noncopyable {
+class Channel : boost::noncopyable {    void SetWriter(WriteCompleteCallBk write);
+    int GetAcceptFd();
 public:
     enum EVENT {
         NONE = 0,

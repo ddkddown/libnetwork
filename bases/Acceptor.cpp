@@ -6,7 +6,8 @@
 #include "Acceptor.h"
 #include "Logger.h"
 
-Acceptor::Acceptor(int port):port_(port) {
+Acceptor::Acceptor(EventLoop *loop, int port):loop_(loop), port_(port),
+                    cliLen_(sizeof(cliaddr_)) {
     fd_ = socket(AF_INET, SOCK_STREAM, 0);
     fcntl(fd_, F_SETFL, O_NONBLOCK);
 
@@ -27,12 +28,10 @@ Acceptor::Acceptor(int port):port_(port) {
             LOG_ERR<<"bind socket failed!"<<endl;
             break;
         }
-
-        if(listen(fd_, LISTENQ) < 0) {
-            LOG_ERR<<"listen fd_ "<<fd_<<" failed";
-            break;
-        }
     } while (0);
+
+    acceptChannel_ = make_shared<Channel>(loop, fd_);
+    acceptChannel_->SetReadCallbk(bind(&Acceptor::HandleRead, this));
 }
 
 Acceptor::~Acceptor() {
@@ -40,6 +39,21 @@ Acceptor::~Acceptor() {
     close(fd_);
 }
 
-int Acceptor::GetFd() {
-    return fd_;
+void Acceptor::Listen() {
+    listen(fd_, LISTENQ);
+    acceptChannel_->EnableRead();
+}
+
+void Acceptor::HandleRead() {
+    //TODO 文件描述符耗完时的处理
+    struct sockaddr_in cliaddr;
+    int clientFd = accept(fd_, (sockaddr*)&cliaddr_, &cliLen_);
+    if(0 <= clientFd) {
+        if(newConnCallBk_) {
+            newConnCallBk_(clientFd);
+            return;
+        }
+
+        close(clientFd);
+    }
 }

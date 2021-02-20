@@ -29,5 +29,5 @@ void ThreadPool::Run() {
         pool_[i]->run();
     }
 
-    mainLoop_.Run();
+    mainLoop_.Loop();
 }

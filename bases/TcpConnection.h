@@ -58,6 +58,10 @@ public:
     void ConnectEstablished(); //创建连接时调用
     void ConnectDestroyed(); //移除连接时调用
 
+    int GetFd() {
+        return fd_;
+    }
+
 private:
     enum States {
         DISCONNECTED,
