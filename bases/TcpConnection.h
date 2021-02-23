@@ -82,12 +82,12 @@ private:
 private:
     int fd_;
     shared_ptr<Channel> channel_;
-    EventLoop *loop_;
+    EventLoop *loop_; //TODO weak_ptr?
     States state_;
     ConnetionCallBk connectionCallBk_;
     MessageCallBk messageCallBk_;
     WriteCompleteBk writeCallBk_;
-    ConnetionCallBk closeCallBk_;
+    CloseCallBk closeCallBk_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 };
