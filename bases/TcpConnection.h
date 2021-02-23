@@ -82,7 +82,7 @@ private:
 private:
     int fd_;
     shared_ptr<Channel> channel_;
-    EventLoop *loop_;
+    EventLoop *loop_; //TODO weak_ptr?
     States state_;
     ConnetionCallBk connectionCallBk_;
     MessageCallBk messageCallBk_;
