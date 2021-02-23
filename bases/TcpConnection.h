@@ -87,7 +87,7 @@ private:
     ConnetionCallBk connectionCallBk_;
     MessageCallBk messageCallBk_;
     WriteCompleteBk writeCallBk_;
-    ConnetionCallBk closeCallBk_;
+    CloseCallBk closeCallBk_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
 };
