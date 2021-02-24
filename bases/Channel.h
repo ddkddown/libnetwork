@@ -1,10 +1,11 @@
 #pragma once
 #include <iostream>
 #include <functional>
+#include <boost/noncopyable.hpp>
+#include <memory>
 #include <unistd.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
-#include <boost/noncopyable.hpp>
 #include "Logger.h"
 
 class EventLoop;
@@ -13,8 +14,7 @@ using namespace std;
 using EventCallback = function<void()>;
 using ReadCallback = function<void()>;
 
-class Channel : boost::noncopyable {    void SetWriter(WriteCompleteCallBk write);
-    int GetAcceptFd();
+class Channel : boost::noncopyable {
 public:
     enum EVENT {
         NONE = 0,

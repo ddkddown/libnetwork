@@ -22,7 +22,7 @@ void TcpConnection::Send(Buffer *buff) {
 void TcpConnection::ShutDown() {
     if(CONNECTED == state_) {
         SetState(DISCONNECTING);
-        loop_-RunInLoop(bind(&TcpConnection::ShutdownInLoop, this));
+        loop_->RunInLoop(bind(&TcpConnection::ShutdownInLoop, this));
     }
 }
 
@@ -45,18 +45,6 @@ void TcpConnection::ConnectEstablished() {
     connectionCallBk_(shared_from_this());
 }
 
-void TcpConnection::ConnectDestroyed() {
-    assert(CONNECTED == state_);
-    SetState(DISCONNECTED);
-    channel_->DisableAll();
-    closeCallBk_(shared_from_this());
-    loop_->RemoveChannel(channel_.get());
-}
-
-
-
-
-
 void TcpConnection::HandleRead() {
     int ret = inputBuffer_.ReadFromFd(fd_);
     if(0 == ret) {
@@ -77,6 +65,7 @@ void TcpConnection::HandleWrite() {
 
 void TcpConnection::HandleClose() {
     SetState(DISCONNECTED);
+    //先关闭事件，再close掉fd
     channel_->DisableAll();
     closeCallBk_(shared_from_this());
     loop_->RemoveChannel(channel_.get());

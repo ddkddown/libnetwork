@@ -29,7 +29,7 @@ int EchoServer::ReadHandler(int fd, void *data) {
     return 0;
 }
 */
-void EchoServer::ReadCompleteCall(const TcpConnectionPtr &conn, Buffer *buff) {
+void EchoServer::MessageCall(const TcpConnectionPtr &conn, Buffer *buff) {
     LOG_DEBUG<<"read complete call"<<endl;
     char tmp[1024] = {0};
     int len = buff->GetData(tmp, 1024);
@@ -37,16 +37,18 @@ void EchoServer::ReadCompleteCall(const TcpConnectionPtr &conn, Buffer *buff) {
     return;
 }
 
-void EchoServer::WriteCompleteCall(const TcpConnectionPtr& conn, Buffer *buff) {
+void EchoServer::WriteCompleteCall(const TcpConnectionPtr& conn) {
+    return;
+}
+
+void EchoServer::ConnectionCall(const TcpConnectionPtr &conn) {
     return;
 }
 
 EchoServer::EchoServer(int port, int poolSize):
-                        TcpServer(port, poolSize) {
-    TcpServer::SetReader(bind(&EchoServer::ReadCompleteCall, this,
-                        placeholders::_1, placeholders::_2));
-    TcpServer::SetWriter(bind(&EchoServer::WriteCompleteCall, this,
-                        placeholders::_1, placeholders::_2));
+                        TcpServer(port, poolSize, bind(&EchoServer::ConnectionCall, this, placeholders::_1),
+                                bind(&EchoServer::MessageCall, this, placeholders::_1, placeholders::_2),
+                                bind(&EchoServer::WriteCompleteCall, this, placeholders::_1)) {
 }
 
 EchoServer::~EchoServer() {

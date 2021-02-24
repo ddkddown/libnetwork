@@ -19,7 +19,7 @@ EventDispatch::~EventDispatch() {
 
 void EventDispatch::DeleteChannel(Channel *c) {
     int fd = c->GetFd();
-    auto n = channels_.erase(fd));
+    auto n = channels_.erase(fd);
     if(1 != n) {
         LOG_ERR<<"channel erase error, n:"<<n<<endl;
     }

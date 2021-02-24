@@ -14,12 +14,6 @@ using CloseCallBk = function<void(const TcpConnectionPtr&)>;
 using WriteCompleteBk = function<void(const TcpConnectionPtr&)>;
 using MessageCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
 
-void DefaultConnectionCallBk(const TcpConnectionPtr &conn) {}
-
-void DefaultMessageCallBk(const TcpConnectionPtr &conn, Buffer *buff) {
-    buff->Clear();
-}
-
 class TcpConnection : public enable_shared_from_this<TcpConnection>,
                     boost::noncopyable {
 public:
@@ -56,7 +50,6 @@ public:
     }
 
     void ConnectEstablished(); //创建连接时调用
-    void ConnectDestroyed(); //移除连接时调用
 
     int GetFd() {
         return fd_;
