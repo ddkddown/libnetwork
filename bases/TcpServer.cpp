@@ -36,14 +36,15 @@ void TcpServer::Start() {
 }
 
 void TcpServer::NewConn(int sockFd) {
-    EventLoop &loop = pool_.GetLoop();
-    TcpConnectionPtr conn(new TcpConnection(&loop, sockFd));
+    EventLoop &ioLoop = pool_.GetLoop();
+    TcpConnectionPtr conn(new TcpConnection(&ioLoop, sockFd));
     connections_[sockFd] = conn;
     conn->SetConnectionCallBk(connectionCallBk_);
     conn->SetWriteCompleteCallBk(writeCompleteBk_);
     conn->SetMessageCallBk(messageCallBk_);
     conn->SetCloseCallBk(bind(&TcpServer::RemoveConnection, this, _1));
-    pool_.GetMainLoop(boost::bind(&TcpConnection::ConnectEstablished, conn));
+    //可以用ioloop::queueInLoop吗？，不能在mainloop里阻塞太久， 
+    pool_.GetMainLoop.RunInLoop(boost::bind(&TcpConnection::ConnectEstablished, conn));
 }
 
 void TcpServer::RemoveConnection(const TcpConnectionPtr& conn) {

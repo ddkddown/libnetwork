@@ -28,6 +28,9 @@ void EventDispatch::DeleteChannel(Channel *c) {
 }
 
 void EventDispatch::UpdateChannel(Channel *c) {
+    
+    // 当io线程阻塞在epoll_wait时，进行epoll_ctl增加fd操作是允许的, 但关闭是会导致未定义行为
+    //详情见man 手册 参考: https://man7.org/linux/man-pages/man2/epoll_wait.2.html
     if(c->GetIndex() < 0) {
         //添加
         c->SetIndex(1);
