@@ -1,7 +1,6 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-
 extern "C" {
 #include <assert.h>
 }
@@ -28,8 +27,11 @@ private:
 public:
     static void InitLog(const char *file);
 
-    static inline std::fstream& RecordLog() {
-        return logStream_;
+    /*static inline std::fstream& RecordLog() {
+        //return logStream_;
+    }*/
+    static inline std::ostream& RecordLog() {
+        return std::cout;
     }
 
     static void Flush() {
