@@ -22,7 +22,7 @@ func routine(wg *sync.WaitGroup) {
 func main() {
 	var wg sync.WaitGroup
 
-	for i := 0; i <= 100; i++ {
+	for i := 0; i <= 1000; i++ {
 		wg.Add(1)
 		go routine(&wg)
 	}

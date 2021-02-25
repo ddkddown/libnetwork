@@ -12,7 +12,9 @@ ThreadPool::ThreadPool(int size):size_(size), position_(0) {
     }
 }
 
-ThreadPool::~ThreadPool() {}
+ThreadPool::~ThreadPool() {
+    Quit();
+}
 
 EventLoop& ThreadPool::GetLoop() {
     //轮询(除了mainLoop)
@@ -30,4 +32,12 @@ void ThreadPool::Run() {
     }
 
     mainLoop_.Loop();
+}
+
+void ThreadPool::Quit() {
+    for (int i = 0; i < pool_.size(); ++i) {
+        pool_[i]->Quit();
+    }
+    
+    mainLoop_.Quit();
 }

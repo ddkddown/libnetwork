@@ -4,6 +4,8 @@
 #include "EventLoop.h"
 #include "Logger.h"
 
+
+/*
 static int CreateWakeFd() {
     int wakeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if(wakeFd < 0) {
@@ -13,6 +15,7 @@ static int CreateWakeFd() {
 
     return wakeFd;
 }
+*/
 
 EventLoop::EventLoop()
         : looping_(false),
@@ -20,15 +23,13 @@ EventLoop::EventLoop()
           eventHandling_(false),
           callingPendingFunctors_(false),
           dispatcher_(this),
-          wakeFd_(CreateWakeFd()),
-          wakeupChannel_(new Channel(this, wakeFd_)) {
-    
+          wake_(),
+          wakeupChannel_(new Channel(this, wake_.GetReader())) {
     wakeupChannel_->SetReadCallbk(bind(&EventLoop::HandleWakeUp, this));
     wakeupChannel_->EnableRead();
 }
 
 EventLoop::~EventLoop() {
-    close(wakeFd_);
 }
 
 void EventLoop::Loop() {
@@ -36,6 +37,7 @@ void EventLoop::Loop() {
     looping_ = true;
     while(!quit_) {
         activeChannles_.clear();
+        LOG_DEBUG<<"dispatching"<<endl;
         dispatcher_.Dispatch(&activeChannles_);
         eventHandling_ = true;
         for(auto i : activeChannles_) {
@@ -48,14 +50,17 @@ void EventLoop::Loop() {
 }
 
 
-int EventLoop::Quit() {
-    quit_ = true;
+void EventLoop::Quit() {
+    if(quit_) {
+        return;
+    }
     wakeup();
 }
 
 void EventLoop::wakeup() {
     char one = 1;
-    write(wakeFd_, &one, sizeof one);
+    write(wake_.GetWriter(), &one, sizeof one);
+    quit_ = true;
 }
 
 void EventLoop::RunInLoop(const Functor &cb) {
@@ -80,8 +85,10 @@ void EventLoop::RemoveChannel(Channel *c) {
 }
 
 void EventLoop::HandleWakeUp() {
+    LOG_DEBUG<<"handle wake up"<<endl;
+
     char one = 1;
-    read(wakeFd_, &one, sizeof one);
+    ssize_t size = read(wake_.GetReader(), &one, sizeof one);
 }
 
 void EventLoop::DoPendingFunctors() {

@@ -10,6 +10,7 @@ public:
     EventLoop& GetLoop();
     EventLoop& GetMainLoop();
     void Run();
+    void Quit();
 private:
     int size_;
     int position_;

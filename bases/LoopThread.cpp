@@ -6,6 +6,10 @@ LoopThread::LoopThread():t_(nullptr) {
 }
 
 LoopThread::~LoopThread() {
+    Quit();
+}
+
+void LoopThread::Quit() {
     loop_.Quit();
     if(t_->joinable()) t_->join();
 }

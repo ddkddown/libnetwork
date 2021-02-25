@@ -13,6 +13,7 @@ public:
             const MessageCallBk &ms, const WriteCompleteBk &wr);
     virtual ~TcpServer();
     void Start();
+    void Quit();
 
     inline void SetConnectionCallBk(const ConnetionCallBk &cb) {
         connectionCallBk_ = cb;

@@ -1,34 +1,7 @@
+#include <memory>
 #include "EchoServer.h"
 #include "Logger.h"
 
-
-//TODO 修改handle read
-/*
-int EchoServer::ReadHandler(int fd, void *data) {
-    char buff[1024] = {0};
-    int ret = 0;
-    do
-    {
-        ret = recv(fd, buff, 1024, 0);
-        if(0 == ret) {
-            close(fd);
-            break;
-        }
-
-        //TODO EWOULDBLOCK and EINTR
-        if(-1 == ret && errno == EAGAIN) {
-            continue;
-        }
-
-        LOG_DEBUG<<"echo read: "<<buff<<endl;
-        send(fd, buff, 1024, 0);
-        break;
-
-    } while (1);
-
-    return 0;
-}
-*/
 void EchoServer::MessageCall(const TcpConnectionPtr &conn, Buffer *buff) {
     LOG_DEBUG<<"read complete call"<<endl;
     char tmp[1024] = {0};
@@ -55,8 +28,15 @@ EchoServer::~EchoServer() {
     
 }
 
+std::shared_ptr<EchoServer> p;
+void SigTermHandler(int s) {
+    LOG_INFO<<"recv sigterm"<<endl;
+    p->Quit();
+}
+
 int main() {
+    signal(SIGTERM, SigTermHandler);
     Logger::InitLog("./echo.log");
-    EchoServer echo(9677, 1);
-    echo.Start();
+    p = make_shared<EchoServer>(9677, 10);
+    p->Start();
 }

@@ -8,6 +8,7 @@ public:
     ~LoopThread();
     EventLoop& GetLoop();
     void run();
+    void Quit();
 private:
     void ThreadFunc();
     // loop_必须在t_调用前构造

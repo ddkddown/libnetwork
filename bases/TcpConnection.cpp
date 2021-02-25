@@ -63,6 +63,10 @@ void TcpConnection::HandleWrite() {
     if(writeCallBk_) writeCallBk_(shared_from_this());
 }
 
+void TcpConnection::ConnectDestroyed() {
+    HandleClose();
+}
+
 void TcpConnection::HandleClose() {
     SetState(DISCONNECTED);
     //先关闭事件，再close掉fd

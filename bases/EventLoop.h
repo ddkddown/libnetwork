@@ -20,19 +20,44 @@ public:
     void QueueInLoop(const Functor &cb);
     void UpdateChannel(Channel *c);
     void RemoveChannel(Channel *c);
-    int Quit();
+    inline bool IsRunning() {
+        return looping_;
+    }
+
+    void Quit();
 private:
     using ChannList = vector<Channel*>;
     void DoPendingFunctors();
     void HandleWakeUp();
     void wakeup();
 
+    class Wakeup {
+    public:
+        Wakeup() {
+            assert(0 == pipe(pipeFd_));
+        }
+
+        int GetReader() {
+            return pipeFd_[0];
+        }
+
+        int GetWriter() {
+            return pipeFd_[1];
+        }
+
+        ~Wakeup() {
+            close(pipeFd_[0]);
+            close(pipeFd_[1]);
+        }
+    private:
+        int pipeFd_[2];
+    };
 private:
     bool looping_;
     bool quit_;
     bool eventHandling_;
     bool callingPendingFunctors_;
-    int wakeFd_;
+    Wakeup wake_;
     shared_ptr<Channel> wakeupChannel_;
     ChannList activeChannles_;
     EventDispatch dispatcher_;

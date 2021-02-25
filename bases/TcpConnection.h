@@ -51,6 +51,7 @@ public:
 
     void ConnectEstablished(); //创建连接时调用
 
+    void ConnectDestroyed();
     int GetFd() {
         return fd_;
     }
