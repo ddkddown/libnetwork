@@ -67,9 +67,9 @@ void TcpConnection::HandleClose() {
     SetState(DISCONNECTED);
     //先关闭事件，再close掉fd
     channel_->DisableAll();
-    closeCallBk_(shared_from_this());
     loop_->RemoveChannel(channel_.get());
     close(fd_);
+    closeCallBk_(shared_from_this());
 }
 
 void TcpConnection::HandleError() {

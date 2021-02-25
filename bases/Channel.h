@@ -99,7 +99,6 @@ private:
 
     weak_ptr<void> tie_; //用于保证owner对象存在, 使用weak_ptr不增加引用
     bool tied_;
-    bool eventHandling_;
     ReadCallback readCall_;
     EventCallback writeCall_;
     EventCallback closeCall_;
