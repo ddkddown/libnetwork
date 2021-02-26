@@ -3,6 +3,14 @@
 #include "TcpServer.h"
 #include "Logger.h"
 
+static Id GenUUId() {
+   uuid_t u;
+   char buf[36];
+   uuid_generate_random(u);
+   uuid_unparse(u, buf);
+   return buf;
+}
+
 class IgnoreSigPipe
 {
  public:
@@ -47,8 +55,9 @@ void TcpServer::Start() {
 
 void TcpServer::NewConn(int sockFd) {
     EventLoop &ioLoop = pool_.GetLoop();
-    TcpConnectionPtr conn(new TcpConnection(&ioLoop, sockFd));
-    connections_[sockFd] = conn;
+    auto id = GenUUId();
+    TcpConnectionPtr conn(new TcpConnection(&ioLoop, sockFd, id));
+    connections_[id] = conn;
     conn->SetConnectionCallBk(connectionCallBk_);
     conn->SetWriteCompleteCallBk(writeCompleteBk_);
     conn->SetMessageCallBk(messageCallBk_);
@@ -57,6 +66,13 @@ void TcpServer::NewConn(int sockFd) {
 }
 
 void TcpServer::RemoveConnection(const TcpConnectionPtr& conn) {
-    auto n = connections_.erase(conn->GetFd());
+    pool_.GetMainLoop().QueueInLoop(bind(&TcpServer::RemoveConnectionInLoop, this, conn));
+}
+
+void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr& conn) {
+    LOG_DEBUG<<"remove fd"<<conn->GetId()<<"conn count:"<<conn.use_count()<<endl;
+    auto n = connections_.erase(conn->GetId());
     assert(1 == n);
+    EventLoop *ioLoop = conn->GetLoop();
+    ioLoop->QueueInLoop(bind(&TcpConnection::ConnectDestroyed, conn));
 }

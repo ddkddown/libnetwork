@@ -1,7 +1,7 @@
 #include <string.h>
 #include "TcpConnection.h"
-TcpConnection::TcpConnection(EventLoop *loop, int sockfd)
-                :loop_(loop), fd_(sockfd), state_(CONNECTING),
+TcpConnection::TcpConnection(EventLoop *loop, int sockfd, Id id)
+                :loop_(loop), fd_(sockfd), state_(CONNECTING), id_(id),
                 channel_(new Channel(loop, sockfd)) {
     channel_->SetReadCallbk(bind(&TcpConnection::HandleRead, this));
     channel_->SetWriteCallbk(bind(&TcpConnection::HandleWrite, this));
@@ -64,15 +64,20 @@ void TcpConnection::HandleWrite() {
 }
 
 void TcpConnection::ConnectDestroyed() {
-    HandleClose();
+    LOG_DEBUG<<"connect destroy"<<endl;
+    //先关闭事件，再close掉fd
+    if(CONNECTED == state_) {
+        SetState(DISCONNECTED);
+        channel_->DisableAll();
+    }
+    
+    loop_->RemoveChannel(channel_.get());
+    close(fd_);
 }
 
 void TcpConnection::HandleClose() {
     SetState(DISCONNECTED);
-    //先关闭事件，再close掉fd
     channel_->DisableAll();
-    loop_->RemoveChannel(channel_.get());
-    close(fd_);
     closeCallBk_(shared_from_this());
 }
 

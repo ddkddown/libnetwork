@@ -28,7 +28,7 @@ func routine(wg *sync.WaitGroup) {
 func main() {
 
 	t1 := time.Now()
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go routine(&wg)
 	}
@@ -36,7 +36,7 @@ func main() {
 	wg.Wait()
 	fmt.Println("elapsed: ", time.Since(t1))
 
-	time.Sleep(200 * time.Second)
+	//time.Sleep(200 * time.Second)
 
 	for i := 0; i < len(slice); i++ {
 		slice[i].Close()

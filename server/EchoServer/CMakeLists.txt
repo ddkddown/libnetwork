@@ -16,4 +16,4 @@ aux_source_directory(../../bases/ SOURCES)
 
 add_executable(${PROJECT_NAME} EchoServer.cpp ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} -lpthread)
+target_link_libraries(${PROJECT_NAME} -lpthread -luuid)

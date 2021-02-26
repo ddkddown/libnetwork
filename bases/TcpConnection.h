@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
+#include <uuid.h>
 #include "EventLoop.h"
 #include "Buffer.h"
 #include "Channel.h"
@@ -13,11 +14,12 @@ using ConnetionCallBk = function<void(const TcpConnectionPtr&)>;
 using CloseCallBk = function<void(const TcpConnectionPtr&)>;
 using WriteCompleteBk = function<void(const TcpConnectionPtr&)>;
 using MessageCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
+using Id = string;
 
 class TcpConnection : public enable_shared_from_this<TcpConnection>,
                     boost::noncopyable {
 public:
-    TcpConnection(EventLoop *loop, int sockfd);
+    TcpConnection(EventLoop *loop, int sockfd, Id id);
 
     virtual ~TcpConnection();
 
@@ -56,6 +58,9 @@ public:
         return fd_;
     }
 
+    Id GetId() {
+        return id_;
+    } 
 private:
     enum States {
         DISCONNECTED,
@@ -75,6 +80,7 @@ private:
 
 private:
     int fd_;
+    Id id_;
     shared_ptr<Channel> channel_;
     EventLoop *loop_; //TODO weak_ptr?
     States state_;

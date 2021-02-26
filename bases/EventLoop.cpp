@@ -54,13 +54,13 @@ void EventLoop::Quit() {
     if(quit_) {
         return;
     }
+    quit_ = true;
     wakeup();
 }
 
 void EventLoop::wakeup() {
     char one = 1;
     write(wake_.GetWriter(), &one, sizeof one);
-    quit_ = true;
 }
 
 void EventLoop::RunInLoop(const Functor &cb) {

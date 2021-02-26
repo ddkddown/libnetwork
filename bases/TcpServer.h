@@ -29,9 +29,10 @@ public:
 private:
     void NewConn(int sockfd);
     void RemoveConnection(const TcpConnectionPtr& conn);
+    void RemoveConnectionInLoop(const TcpConnectionPtr& conn);
 
 private:
-    using ConnectionMap = map<int, TcpConnectionPtr>;
+    using ConnectionMap = map<Id, TcpConnectionPtr>;
     ConnetionCallBk connectionCallBk_;
     MessageCallBk messageCallBk_;
     WriteCompleteBk writeCompleteBk_;
