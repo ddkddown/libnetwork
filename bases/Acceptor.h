@@ -15,12 +15,14 @@ public:
     void Listen();
 private:
     void HandleRead();
+    void OpenDevNull();
 private:
     enum {
         LISTENQ = 100
     };
     int port_;
     int fd_;
+    int extraFd_;
     struct sockaddr_in cliaddr_;
     socklen_t cliLen_;
     NewConnectionCallBk newConnCallBk_;

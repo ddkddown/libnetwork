@@ -28,6 +28,7 @@ Acceptor::Acceptor(EventLoop *loop, int port):loop_(loop), port_(port),
             LOG_ERR<<"bind socket failed!"<<endl;
             break;
         }
+
     } while (0);
 
     acceptChannel_ = make_shared<Channel>(loop, fd_);
@@ -37,6 +38,12 @@ Acceptor::Acceptor(EventLoop *loop, int port):loop_(loop), port_(port),
 Acceptor::~Acceptor() {
     shutdown(fd_, SHUT_RDWR);
     close(fd_);
+    close(extraFd_);
+}
+
+void Acceptor::OpenDevNull() {
+    extraFd_ = open("/dev/null", 0);
+    assert(-1 != extraFd_);
 }
 
 void Acceptor::Listen() {
@@ -48,12 +55,18 @@ void Acceptor::HandleRead() {
     //TODO 文件描述符耗完时的处理
     struct sockaddr_in cliaddr;
     int clientFd = accept(fd_, (sockaddr*)&cliaddr_, &cliLen_);
-    if(0 <= clientFd) {
-        if(newConnCallBk_) {
-            newConnCallBk_(clientFd);
-            return;
-        }
-
+    if(0 <= clientFd && newConnCallBk_) {
+        newConnCallBk_(clientFd);
+    }
+    else if (-1 == clientFd && errno == EMFILE) {
+        close(extraFd_);
+        clientFd = accept(fd_, (sockaddr*)&cliaddr_, &cliLen_);
+        assert(-1 != clientFd);
         close(clientFd);
+        OpenDevNull();
+        LOG_WARN<<"too many open files!"<<endl;
+    }
+    else {
+        LOG_WARN<<"accept error: "<<clientFd<<strerror(errno)<<endl;
     }
 }
