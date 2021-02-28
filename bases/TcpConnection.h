@@ -2,7 +2,7 @@
 #include <functional>
 #include <memory>
 #include <boost/scoped_ptr.hpp>
-#include <uuid.h>
+#include <uuid/uuid.h>
 #include "EventLoop.h"
 #include "Buffer.h"
 #include "Channel.h"

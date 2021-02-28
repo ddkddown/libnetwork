@@ -46,8 +46,8 @@ void TcpServer::Quit() {
         TcpConnectionPtr conn = i.second;
         i.second.reset();
         conn->GetLoop()->QueueInLoop(
-            bind(&TcpConnection::ConnectDestroyed, conn);
-        )
+            bind(&TcpConnection::ConnectDestroyed, conn)
+        );
     }
 }
 void TcpServer::Start() {

@@ -24,10 +24,8 @@ Acceptor::Acceptor(EventLoop *loop, int port):loop_(loop), port_(port),
         if(-1 == setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &on, static_cast<socklen_t>(sizeof on))) {
             LOG_WARN<<"set reuseaddr failed: "<<strerror(errno)<<endl;
         }
-        if(bind(fd_, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-            LOG_ERR<<"bind socket failed!"<<endl;
-            break;
-        }
+        
+        assert(0 == bind(fd_, (struct sockaddr*)&server_addr, sizeof(server_addr)));
 
     } while (0);
 
