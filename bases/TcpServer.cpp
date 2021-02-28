@@ -43,7 +43,11 @@ void TcpServer::Quit() {
     pool_.Quit();
 
     for(auto &i : connections_) {
-        i.second->ConnectDestroyed();
+        TcpConnectionPtr conn = i.second;
+        i.second.reset();
+        conn->GetLoop()->QueueInLoop(
+            bind(&TcpConnection::ConnectDestroyed, conn);
+        )
     }
 }
 void TcpServer::Start() {
