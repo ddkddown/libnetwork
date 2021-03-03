@@ -35,27 +35,21 @@ void Channel::CheckHandleEvent() {
 }
 
 void Channel::HandleEvent() {
-    if(revents_ & EPOLLOUT) {
-        if(writeCall_) writeCall_();
-    }
-
-    //rst会触发EPOLLHUP(读写端关闭)
-    if(revents_ & EPOLLHUP) {
-        LOG_WARN<<"handle EPOLLHUP"<<endl;
-        if(closeCall_) closeCall_();
-        return;
-    }
-
-    //文件描述符发生错误会触发EPOLLERR
     if(revents_ & EPOLLERR) {
-        LOG_WARN<<"handle EPOLLERR"<<endl;
-        if(errorCall_) errorCall_();
-        return;
-    }
-
-    //EPOLLRDHUP(读端关闭)
-    if(revents_ & (EPOLLIN|EPOLLPRI|EPOLLRDHUP)) {
         if(readCall_) readCall_();
-        return;
+    } else if(revents_ & EPOLLHUP && !(revents_ & EPOLLRDHUP)) {
+        if(readCall_) readCall_();
+    } else {
+        if (revents_ & EPOLLIN) {
+            if(readCall_) readCall_();
+        }
+
+        if (revents_ & EPOLLOUT) {
+            if(writeCall_) writeCall_();
+        }
+
+        if(revents_ & EPOLLRDHUP) {
+            if(closeCall_) closeCall_();
+        }
     }
 }

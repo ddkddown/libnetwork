@@ -47,7 +47,7 @@ void TcpConnection::ConnectEstablished() {
 
 void TcpConnection::HandleRead() {
     int ret = inputBuffer_.ReadFromFd(fd_);
-    if(0 == ret) {
+    if(0 == ret || -1 == ret) {
         HandleClose();
     }
     else if (0 < ret) {
