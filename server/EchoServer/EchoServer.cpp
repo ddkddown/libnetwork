@@ -2,12 +2,17 @@
 #include "EchoServer.h"
 #include "Logger.h"
 
+void TimeTest() {
+    LOG_INFO<<"yoooooo"<<endl;
+}
+
 void EchoServer::MessageCall(const TcpConnectionPtr &conn, Buffer *buff) {
     LOG_DEBUG<<"read complete call"<<endl;
     char tmp[1024] = {0};
     int len = buff->GetData(tmp, 1024);
     LOG_DEBUG<<tmp<<endl;
     send(conn->GetFd(), tmp, len, 0);
+    conn->GetLoop()->AddTimer(bind(TimeTest), 1, false);
     return;
 }
 

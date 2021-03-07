@@ -3,11 +3,13 @@
 #include <list>
 #include "Timer.h"
 #include "Channel.h"
-#include "EventLoop.h"
+
+class EventLoop;
 
 class TimeRounder : public boost::noncopyable {
 public:
     TimeRounder(EventLoop *loop, int wheelSize);
+    ~TimeRounder();
     void Run();
     void AddTimer(TimeCallback cb, int interval, bool repeat);
 private:

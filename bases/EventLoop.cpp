@@ -4,19 +4,6 @@
 #include "EventLoop.h"
 #include "Logger.h"
 
-
-/*
-static int CreateWakeFd() {
-    int wakeFd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if(wakeFd < 0) {
-        LOG_ERR<<"create eventFd failed!";
-        abort();
-    }
-
-    return wakeFd;
-}
-*/
-
 EventLoop::EventLoop()
         : looping_(false),
           quit_(false),
@@ -24,7 +11,8 @@ EventLoop::EventLoop()
           callingPendingFunctors_(false),
           dispatcher_(this),
           wake_(),
-          wakeupChannel_(new Channel(this, wake_.GetReader())) {
+          wakeupChannel_(new Channel(this, wake_.GetReader())),
+          rounder_(this, 5) {
     wakeupChannel_->SetReadCallbk(bind(&EventLoop::HandleWakeUp, this));
     wakeupChannel_->EnableRead();
 }
@@ -32,9 +20,14 @@ EventLoop::EventLoop()
 EventLoop::~EventLoop() {
 }
 
+void EventLoop::AddTimer(TimeCallback cb, int interval, bool repeat) {
+    rounder_.AddTimer(cb, interval, repeat);
+}
+
 void EventLoop::Loop() {
     assert(!looping_);
     looping_ = true;
+    rounder_.Run();
     while(!quit_) {
         activeChannles_.clear();
         LOG_DEBUG<<"dispatching"<<endl;

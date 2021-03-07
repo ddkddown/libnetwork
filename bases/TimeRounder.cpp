@@ -1,16 +1,26 @@
+#include <sys/timerfd.h>
+#include <signal.h>
 #include "TimeRounder.h"
+
 static int GetTimerFd() {
-    //TODO
-    return 0;
-}
-TimeRounder::TimeRounder(EventLoop *loop, int wheelSize):
-            timerFd_(GetTimerFd()), index_(0),
-            loop_(loop), timerChann_(loop, timerFd_),
-            wheelSize_(wheelSize), wheel_(wheelSize_) {
-    timerChann_.SetReadCallbk(&TimeRounder::HandleRead, this);
+    int timerfd = ::timerfd_create(CLOCK_MONOTONIC,
+                                 TFD_NONBLOCK | TFD_CLOEXEC);
+    assert(timerfd >= 0);
+    return timerfd;
 }
 
+TimeRounder::TimeRounder(EventLoop *loop, int wheelSize):
+            timerFd_(GetTimerFd()), index_(0),
+            loop_(loop), 
+            timerChann_(loop, timerFd_),
+            wheelSize_(wheelSize), wheel_(wheelSize_) {
+    timerChann_.SetReadCallbk(bind(&TimeRounder::HandleRead, this));
+}
+
+TimeRounder::~TimeRounder() {}
+
 void TimeRounder::Run() {
+    //TODO set timer
     timerChann_.EnableRead();
 }
 

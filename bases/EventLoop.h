@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "Channel.h"
 #include "EventDispatch.h"
+#include "TimeRounder.h"
 
 class EventLoop : boost::noncopyable {
 public:
@@ -23,7 +24,7 @@ public:
     inline bool IsRunning() {
         return looping_;
     }
-
+    void AddTimer(TimeCallback cb, int interval, bool repeat);
     void Quit();
 private:
     using ChannList = vector<Channel*>;
@@ -63,4 +64,5 @@ private:
     EventDispatch dispatcher_;
     mutex m_;//TODO shared?
     vector<Functor> pendingFunctors_;
+    TimeRounder rounder_;
 };
