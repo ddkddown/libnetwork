@@ -7,7 +7,9 @@ Channel::Channel(EventLoop *loop, int fd)
          event_(NONE),
          revents_(NONE),
          index_(-1),
-         tied_(false){}
+         tied_(false){
+    assert(nullptr != loop_);
+}
 
 Channel::~Channel() {
 }

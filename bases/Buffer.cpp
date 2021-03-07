@@ -10,7 +10,9 @@ Buffer::~Buffer(){}
 int Buffer::ReadFromFd(int fd) {
     CheckFreeSpace();
     int n = recv(fd, BeginWrite(), FreeSpace(), 0);
-    writeIndex_ += n;
+    if(n > 0) {
+        writeIndex_ += n;
+    }
     return n;
 }
 
