@@ -3,16 +3,18 @@
 #include <sys/eventfd.h>
 #include "EventLoop.h"
 #include "Logger.h"
+#include "Epoller.h"
 
 EventLoop::EventLoop()
         : looping_(false),
           quit_(false),
           eventHandling_(false),
           callingPendingFunctors_(false),
-          dispatcher_(this),
+          poller_(nullptr),
           wake_(),
           wakeupChannel_(new Channel(this, wake_.GetReader())),
           rounder_(this, 5) {
+    poller_ = make_shared<Epoller>(this);
     wakeupChannel_->SetReadCallbk(bind(&EventLoop::HandleWakeUp, this));
     wakeupChannel_->EnableRead();
 }
@@ -31,7 +33,7 @@ void EventLoop::Loop() {
     while(!quit_) {
         activeChannles_.clear();
         LOG_DEBUG<<"dispatching"<<endl;
-        dispatcher_.Dispatch(&activeChannles_);
+        poller_->Dispatch(&activeChannles_);
         eventHandling_ = true;
         for(auto i : activeChannles_) {
             i->HandleEvent();
@@ -70,11 +72,11 @@ void EventLoop::QueueInLoop(const Functor &cb) {
 }
 
 void EventLoop::UpdateChannel(Channel *c) {
-    dispatcher_.UpdateChannel(c);
+    poller_->UpdateChannel(c);
 }
 
 void EventLoop::RemoveChannel(Channel *c) {
-    dispatcher_.DeleteChannel(c);
+    poller_->DeleteChannel(c);
 }
 
 void EventLoop::HandleWakeUp() {

@@ -1,23 +1,23 @@
 #include <string.h>
-#include "EventDispatch.h"
+#include "Epoller.h"
 #include "EventLoop.h"
 #include "Logger.h"
 
-EventDispatch::EventDispatch(void* loop):
+Epoller::Epoller(void* loop):
                 events_(InitEventSize),
                 efd_(0),
-                loop_(loop) {
+                Poller(loop) {
     efd_ = epoll_create(1);
     if(-1 == efd_) {
         LOG_ERR<<"create epoll failed!"<<strerror(errno) ;
     }
 }
 
-EventDispatch::~EventDispatch() {
+Epoller::~Epoller() {
     close(efd_);
 }
 
-void EventDispatch::DeleteChannel(Channel *c) {
+void Epoller::DeleteChannel(Channel *c) {
     int fd = c->GetFd();
     auto n = channels_.erase(fd);
     if(1 != n) {
@@ -27,7 +27,7 @@ void EventDispatch::DeleteChannel(Channel *c) {
 
 }
 
-void EventDispatch::UpdateChannel(Channel *c) {
+void Epoller::UpdateChannel(Channel *c) {
     
     // 当io线程阻塞在epoll_wait时，进行epoll_ctl增加fd操作是允许的, 但关闭是会导致未定义行为
     //详情见man 手册 参考: https://man7.org/linux/man-pages/man2/epoll_wait.2.html
@@ -41,7 +41,7 @@ void EventDispatch::UpdateChannel(Channel *c) {
     }
 }
 
-void EventDispatch::Dispatch(ChanneList *activeChannels) {
+void Epoller::Dispatch(ChanneList *activeChannels) {
     auto num = epoll_wait(efd_, &*events_.begin(),
                 static_cast<int>(events_.size()), -1);
     if(num <= 0) {
@@ -63,7 +63,7 @@ void EventDispatch::Dispatch(ChanneList *activeChannels) {
     }
 }
 
-void EventDispatch::Update(int op, Channel *channel) {
+void Epoller::Update(int op, Channel *channel) {
     struct epoll_event event;
     bzero(&event, sizeof event);
     event.events = channel->GetEvent();

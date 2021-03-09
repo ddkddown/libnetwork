@@ -7,7 +7,7 @@
 #include <queue>
 #include <unistd.h>
 #include "Channel.h"
-#include "EventDispatch.h"
+#include "Poller.h"
 #include "TimeRounder.h"
 
 class EventLoop : boost::noncopyable {
@@ -26,6 +26,9 @@ public:
     }
     void AddTimer(TimeCallback cb, int interval, bool repeat);
     void Quit();
+    void SetPoller(const shared_ptr<Poller> &poller) {
+        poller_ = poller;
+    }
 private:
     using ChannList = vector<Channel*>;
     void DoPendingFunctors();
@@ -61,7 +64,7 @@ private:
     Wakeup wake_;
     shared_ptr<Channel> wakeupChannel_;
     ChannList activeChannles_;
-    EventDispatch dispatcher_;
+    shared_ptr<Poller> poller_;
     mutex m_;//TODO shared?
     vector<Functor> pendingFunctors_;
     TimeRounder rounder_;

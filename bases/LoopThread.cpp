@@ -1,6 +1,8 @@
+#include <memory>
 #include <assert.h>
 #include "LoopThread.h"
 #include "Logger.h"
+#include "Epoller.h"
 
 LoopThread::LoopThread():t_(nullptr) {
 }
@@ -14,6 +16,7 @@ void LoopThread::Quit() {
     if(t_->joinable()) t_->join();
 }
 void LoopThread::ThreadFunc() {
+    loop_.SetPoller(std::make_shared<Epoller>(&loop_));
     do
     {
         loop_.Loop();

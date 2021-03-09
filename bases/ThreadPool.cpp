@@ -1,5 +1,6 @@
 #include "ThreadPool.h"
 #include "Logger.h"
+#include "Epoller.h"
 
 ThreadPool::ThreadPool(int size):size_(size), position_(0) {
     if(size_ <= 0) {
@@ -30,7 +31,6 @@ void ThreadPool::Run() {
     for (int i = 0; i < pool_.size(); ++i) {
         pool_[i]->run();
     }
-
     mainLoop_.Loop();
 }
 
