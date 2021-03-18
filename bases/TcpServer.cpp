@@ -25,8 +25,11 @@ IgnoreSigPipe initObj;
 TcpServer::TcpServer(int port, int poolSize, const ConnetionCallBk &cn,
             const MessageCallBk &ms, const WriteCompleteBk &wr):
             accpt_(new Acceptor(&pool_.GetMainLoop(), port)), pool_(poolSize), connectionCallBk_(cn),
-            messageCallBk_(ms), writeCompleteBk_(wr), started_(false) {
+            messageCallBk_(ms), writeCompleteBk_(wr), started_(false), heartBeat_(false), heartBeatNum_(0) {
     accpt_->SetNewConnCallBk(bind(&TcpServer::NewConn, this, placeholders::_1));
+
+    //绑定默认心跳回调处理函数
+    heartBeatCallBk_ = bind(&TcpServer::DefaultHeartBeatHandler, this, std::placeholders::_1);
 }
 
 TcpServer::~TcpServer() {
@@ -67,6 +70,12 @@ void TcpServer::NewConn(int sockFd) {
     conn->SetMessageCallBk(messageCallBk_);
     conn->SetCloseCallBk(bind(&TcpServer::RemoveConnection, this, std::placeholders::_1));
     pool_.GetMainLoop().RunInLoop(bind(&TcpConnection::ConnectEstablished, conn));
+
+    if(heartBeat_) {
+        //开启心跳
+        //添加心跳定时任务
+        //ioLoop.AddTimer();
+    }
 }
 
 void TcpServer::RemoveConnection(const TcpConnectionPtr& conn) {
@@ -79,4 +88,22 @@ void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr& conn) {
     assert(1 == n);
     EventLoop *ioLoop = conn->GetLoop();
     ioLoop->QueueInLoop(bind(&TcpConnection::ConnectDestroyed, conn));
+}
+
+void TcpServer::DefaultHeartBeatHandler(const TcpConnectionPtr& conn) {
+
+    //TODO 若超过心跳响应次数，则关闭连接
+    if(conn->GetDuraion().count() >= HEART_BEAT_TIME) {
+        if(conn->AddHeartBeat() >= heartBeatNum_) {
+            pool_.GetMainLoop().QueueInLoop(bind(&TcpServer::RemoveConnectionInLoop, this, conn));
+            return;
+        }
+    }
+
+    //TODO 向客户端发送心跳包
+    //TODO 非阻塞
+    char buff[10] = "ping";
+    if(-1 == send(conn->GetFd(), buff, 10, 0)) {
+        LOG_WARN<<"send heart beat failed!"<<endl;
+    }
 }

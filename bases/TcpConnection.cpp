@@ -51,6 +51,7 @@ void TcpConnection::HandleRead() {
         HandleClose();
     }
     else if (0 < ret) {
+        now_ = chrono::system_clock::now();
         messageCallBk_(shared_from_this(), &inputBuffer_);
     }
     else {

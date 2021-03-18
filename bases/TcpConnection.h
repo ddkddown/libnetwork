@@ -15,6 +15,7 @@ using ConnetionCallBk = function<void(const TcpConnectionPtr&)>;
 using CloseCallBk = function<void(const TcpConnectionPtr&)>;
 using WriteCompleteBk = function<void(const TcpConnectionPtr&)>;
 using MessageCallBk = function<void(const TcpConnectionPtr&, Buffer*)>;
+using HeartBeatCallBk = function<void(const TcpConnectionPtr&)>;
 using Id = string;
 
 class TcpConnection : public enable_shared_from_this<TcpConnection>,
@@ -70,6 +71,19 @@ public:
     void SetTimeStamp(const TIMESTAMP &time) {
         now_ = time;
     }
+
+    void CleanHeartBeat() {
+        heartBeatNum_ = 0;
+    }
+
+    int GetHeartBeat() {
+        return heartBeatNum_;
+    }
+
+    int AddHeartBeat(int i = 1) {
+        heartBeatNum_ += i;
+        return heartBeatNum_;
+    }
 private:
     enum States {
         DISCONNECTED,
@@ -100,4 +114,5 @@ private:
     Buffer inputBuffer_;
     Buffer outputBuffer_;
     TIMESTAMP now_;
+    int heartBeatNum_;
 };
