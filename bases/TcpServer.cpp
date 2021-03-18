@@ -60,7 +60,7 @@ void TcpServer::Start() {
 void TcpServer::NewConn(int sockFd) {
     EventLoop &ioLoop = pool_.GetLoop();
     auto id = GenUUId();
-    TcpConnectionPtr conn(new TcpConnection(&ioLoop, sockFd, id));
+    TcpConnectionPtr conn(new TcpConnection(&ioLoop, sockFd, id, chrono::system_clock::now()));
     connections_[id] = conn;
     conn->SetConnectionCallBk(connectionCallBk_);
     conn->SetWriteCompleteCallBk(writeCompleteBk_);

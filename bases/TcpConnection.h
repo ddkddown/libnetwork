@@ -6,6 +6,7 @@
 #include "EventLoop.h"
 #include "Buffer.h"
 #include "Channel.h"
+#include "Time.h"
 
 class TcpConnection;
 
@@ -19,7 +20,7 @@ using Id = string;
 class TcpConnection : public enable_shared_from_this<TcpConnection>,
                     boost::noncopyable {
 public:
-    TcpConnection(EventLoop *loop, int sockfd, Id id);
+    TcpConnection(EventLoop *loop, int sockfd, Id id, TIMESTAMP now);
 
     virtual ~TcpConnection();
 
@@ -60,7 +61,15 @@ public:
 
     Id GetId() {
         return id_;
-    } 
+    }
+
+    ELAPSED GetDuraion() {
+        return chrono::system_clock::now() - now_;
+    }
+
+    void SetTimeStamp(const TIMESTAMP &time) {
+        now_ = time;
+    }
 private:
     enum States {
         DISCONNECTED,
@@ -90,4 +99,5 @@ private:
     CloseCallBk closeCallBk_;
     Buffer inputBuffer_;
     Buffer outputBuffer_;
+    TIMESTAMP now_;
 };

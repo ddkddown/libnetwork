@@ -1,8 +1,8 @@
 #include <string.h>
 #include "TcpConnection.h"
-TcpConnection::TcpConnection(EventLoop *loop, int sockfd, Id id)
+TcpConnection::TcpConnection(EventLoop *loop, int sockfd, Id id, TIMESTAMP now)
                 :loop_(loop), fd_(sockfd), state_(CONNECTING), id_(id),
-                channel_(new Channel(loop, sockfd)) {
+                channel_(new Channel(loop, sockfd)), now_(now) {
     channel_->SetReadCallbk(bind(&TcpConnection::HandleRead, this));
     channel_->SetWriteCallbk(bind(&TcpConnection::HandleWrite, this));
     channel_->SetCloseCallbk(bind(&TcpConnection::HandleClose, this));
